@@ -11,7 +11,7 @@ body{background:var(--bg);color:var(--txt);font-family:var(--f);font-size:15px;m
 h1{font-size:22px;font-weight:700;letter-spacing:-.4px;margin-bottom:4px}
 .sub{font-size:13px;color:var(--mut);line-height:1.5;margin-bottom:20px}
 .lbl{font-size:12px;color:var(--mut);margin-bottom:5px}
-input[type=url],input[type=password]{width:100%;background:var(--sur);border:1px solid var(--bdr);border-radius:var(--r);color:var(--txt);font-family:var(--f);font-size:15px;padding:12px 14px;outline:none;-webkit-appearance:none;margin-bottom:10px}
+input[type=url]{width:100%;background:var(--sur);border:1px solid var(--bdr);border-radius:var(--r);color:var(--txt);font-family:var(--f);font-size:15px;padding:12px 14px;outline:none;-webkit-appearance:none;margin-bottom:10px}
 input:focus{border-color:var(--acc)}
 input::placeholder{color:var(--mut)}
 .opts{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
@@ -20,8 +20,7 @@ input::placeholder{color:var(--mut)}
 select{background:var(--sur);border:1px solid var(--bdr);border-radius:8px;color:var(--txt);font-family:var(--f);font-size:13px;padding:6px 10px;outline:none;-webkit-appearance:none;cursor:pointer}
 #goBtn{width:100%;background:var(--acc);border:none;border-radius:var(--r);color:#0d1117;font-family:var(--f);font-size:16px;font-weight:700;padding:14px;cursor:pointer;-webkit-tap-highlight-color:transparent;margin-bottom:6px}
 #goBtn:disabled{opacity:.4;cursor:not-allowed}
-.note{font-size:11px;color:var(--mut);line-height:1.5;margin-bottom:4px}
-.note b{color:var(--warn)}
+.note{font-size:11px;color:var(--mut);line-height:1.5}
 #status{margin-top:12px;font-size:13px;color:var(--mut);min-height:18px;word-break:break-all}
 .pbw{background:var(--sur);border-radius:4px;height:4px;margin-top:8px;overflow:hidden;display:none}
 .pb{background:var(--acc);height:100%;width:0%;transition:width .3s}
@@ -59,8 +58,6 @@ select{background:var(--sur);border:1px solid var(--bdr);border-radius:8px;color
 <h1>Asset Visibility Crawler</h1>
 <p class="sub">Crawls a website and shows all publicly visible assets.</p>
 
-<p class="lbl">Anthropic API Key</p>
-<input type="password" id="apiKey" placeholder="sk-ant-api03-..." autocomplete="off" spellcheck="false">
 <input type="url" id="urlInput" value="https://paulus.unicoz.nl/" placeholder="https://example.com" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false">
 
 <div class="opts">
@@ -70,7 +67,7 @@ select{background:var(--sur);border:1px solid var(--bdr);border-radius:8px;color
 </div>
 
 <button id="goBtn" onclick="run()">Start Crawl</button>
-<p class="note"><b>Key stored in memory only.</b> Revoke after use at console.anthropic.com.</p>
+<p class="note">No API key needed. Fetches pages directly via browser.</p>
 
 <div id="status"></div>
 <div class="pbw" id="pbw"><div class="pb" id="pb"></div></div>
@@ -84,7 +81,6 @@ select{background:var(--sur);border:1px solid var(--bdr);border-radius:8px;color
   <div class="chip"><b id="sOther">0</b>Other</div>
   <div class="chip fail" id="sFailChip" style="display:none"><b id="sFails">0</b>Failed</div>
 </div>
-
 <div class="ftrs" id="ftrs" style="display:none">
   <button class="fb on" onclick="filt('all',this)">All</button>
   <button class="fb" onclick="filt('image',this)">Images</button>
@@ -113,145 +109,61 @@ function st(m){document.getElementById('status').textContent=m;}
 function pr(v){document.getElementById('pbw').style.display='block';document.getElementById('pb').style.width=Math.min(100,v)+'%';}
 function toggleLog(){var b=document.getElementById('logbox');b.classList.toggle('on');document.getElementById('logbtn').textContent=b.classList.contains('on')?'Hide debug log':'Show debug log';}
 
-async function fetchPage(apiKey, targetUrl) {
-  L('Fetching: ' + targetUrl);
+// Proxy list - try each until one works
+var PROXIES=[
+  function(u){return'https://api.allorigins.win/raw?url='+encodeURIComponent(u);},
+  function(u){return'https://api.allorigins.win/get?url='+encodeURIComponent(u);},
+  function(u){return'https://corsproxy.io/?url='+encodeURIComponent(u);}
+];
 
-  // Use claude-sonnet-4-6 with web_search, explicitly instructing it to fetch the exact URL
-  var resp = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'content-type': 'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
-      'anthropic-dangerous-direct-browser-access': 'true'
-    },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 8000,
-      tools: [{ type: 'web_search_20250305', name: 'web_search' }],
-      system: 'You are a web crawler. When asked to fetch a URL, use the web_search tool to retrieve that exact URL. Return the complete raw HTML source code of the page. Include all HTML tags. Do not summarize or explain.',
-      messages: [{
-        role: 'user',
-        content: 'Fetch this exact URL and return its complete raw HTML source code: ' + targetUrl + '\n\nUse web_search with the query: site:' + new URL(targetUrl).hostname + ' ' + targetUrl
-      }]
-    })
-  });
-
-  L('HTTP ' + resp.status);
-  var raw = await resp.text();
-  L('Response (' + raw.length + 'c): ' + raw.slice(0, 80));
-
-  var data;
-  try { data = JSON.parse(raw); } catch(e) { throw new Error('JSON: ' + raw.slice(0,150)); }
-  if (data.type === 'error') throw new Error(data.error.type + ': ' + data.error.message);
-  if (!data.content) throw new Error('No content');
-
-  L('stop=' + data.stop_reason + ' blocks=' + data.content.length);
-
-  var html = '';
-  for (var i = 0; i < data.content.length; i++) {
-    var b = data.content[i];
-    L('  block[' + i + ']: ' + b.type + (b.type === 'text' ? ' (' + b.text.length + 'c)' : ''));
-    if (b.type === 'text') html += b.text;
-    if (b.type === 'web_search_tool_result') {
-      var items = b.content || [];
-      for (var j = 0; j < items.length; j++) {
-        var item = items[j];
-        L('    [' + j + '] type=' + item.type + (item.url ? ' url=' + item.url.slice(0,60) : ''));
-        // Only use content from the exact URL we requested
-        if (item.page_content && item.url && item.url.replace(/\/$/,'') === targetUrl.replace(/\/$/,'')) {
-          html += item.page_content;
-          L('    MATCH - page_content: ' + item.page_content.length + 'c', 'ok');
-        } else if (item.page_content) {
-          L('    SKIP (wrong url: ' + (item.url||'').slice(0,50) + ')', 'lwarn');
-        }
+async function fetchPage(targetUrl){
+  L('Fetching: '+targetUrl);
+  var lastErr='';
+  for(var i=0;i<PROXIES.length;i++){
+    var proxyUrl=PROXIES[i](targetUrl);
+    try{
+      var resp=await fetch(proxyUrl,{headers:{'Accept':'text/html,*/*'}});
+      L('Proxy '+i+' HTTP '+resp.status);
+      if(!resp.ok){lastErr='HTTP '+resp.status;continue;}
+      var text=await resp.text();
+      // allorigins /get returns JSON wrapper
+      if(text.trim().startsWith('{')){
+        try{var j=JSON.parse(text);if(j.contents)text=j.contents;}catch(e){}
       }
-    }
+      if(text.length<100){lastErr='Empty response';continue;}
+      L('Got '+text.length+'c','ok');
+      return text;
+    }catch(e){lastErr=e.message;L('Proxy '+i+' failed: '+e.message,'lwarn');}
   }
-
-  // If tool_use, do second turn
-  if (data.stop_reason === 'tool_use') {
-    L('Second turn...');
-    var tus = data.content.filter(function(b){ return b.type === 'tool_use'; });
-    var trs = tus.map(function(b){
-      return { type: 'tool_result', tool_use_id: b.id, content: 'Search complete. Now return the full raw HTML source of ' + targetUrl + '. Include all <img>, <link>, <script> tags.' };
-    });
-    var resp2 = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 8000,
-        tools: [{ type: 'web_search_20250305', name: 'web_search' }],
-        system: 'You are a web crawler. Return raw HTML source code only.',
-        messages: [
-          { role: 'user', content: 'Fetch this exact URL and return its complete raw HTML: ' + targetUrl },
-          { role: 'assistant', content: data.content },
-          { role: 'user', content: trs }
-        ]
-      })
-    });
-    var raw2 = await resp2.text();
-    L('Turn2 HTTP ' + resp2.status + ' (' + raw2.length + 'c)');
-    var data2 = JSON.parse(raw2);
-    if (data2.type === 'error') throw new Error('Turn2: ' + data2.error.message);
-    for (var i = 0; i < (data2.content||[]).length; i++) {
-      var b2 = data2.content[i];
-      L('  t2[' + i + ']: ' + b2.type + (b2.type === 'text' ? ' (' + b2.text.length + 'c)' : ''));
-      if (b2.type === 'text') html += b2.text;
-      if (b2.type === 'web_search_tool_result') {
-        for (var j = 0; j < (b2.content||[]).length; j++) {
-          var it = b2.content[j];
-          if (it.page_content) { html += it.page_content; L('  t2 page_content: ' + it.page_content.length + 'c', 'ok'); }
-        }
-      }
-    }
-  }
-
-  L('Total HTML: ' + html.length + 'c');
-  return html;
+  throw new Error('All proxies failed: '+lastErr);
 }
 
-function extractAssets(html, pageUrl) {
-  var found={}, links={};
-
-  // Try HTML parsing first
-  if (html.indexOf('<') !== -1) {
-    var doc;
-    try { doc = new DOMParser().parseFromString(html, 'text/html'); } catch(e) {}
-    if (doc) {
-      var bel = doc.querySelector('base[href]');
-      var base = bel ? (abs(pageUrl, bel.getAttribute('href')) || pageUrl) : pageUrl;
-      function add(h){if(!h)return;var x=abs(base,h);if(x&&!x.startsWith('data:'))found[x]=true;}
-      function addss(v){if(!v)return;v.split(',').forEach(function(s){var p=s.trim().split(/\s+/)[0];if(p)add(p);});}
-      doc.querySelectorAll('img').forEach(function(el){['src','data-src','data-lazy-src','data-original','data-img','data-image','data-bg','data-lazy'].forEach(function(a){var v=el.getAttribute(a);if(v)add(v);});['srcset','data-srcset'].forEach(function(a){var v=el.getAttribute(a);if(v)addss(v);});});
-      doc.querySelectorAll('picture source').forEach(function(el){var v=el.getAttribute('srcset');if(v)addss(v);var s=el.getAttribute('src');if(s)add(s);});
-      doc.querySelectorAll('[style]').forEach(function(el){var m,re=/url\(\s*['"]?([^'")\s]+)['"]?\s*\)/gi,s=el.getAttribute('style')||'';while((m=re.exec(s))!==null)add(m[1]);});
-      doc.querySelectorAll('style').forEach(function(el){var m,re=/url\(\s*['"]?([^'")\s]+)['"]?\s*\)/gi,css=el.textContent||'';while((m=re.exec(css))!==null){if(!m[1].startsWith('data:'))add(m[1]);}});
-      doc.querySelectorAll('script[src]').forEach(function(el){add(el.getAttribute('src'));});
-      doc.querySelectorAll('link[rel="stylesheet"][href],link[as="style"][href]').forEach(function(el){add(el.getAttribute('href'));});
-      doc.querySelectorAll('link[as="font"][href],link[rel="preload"][href],link[rel~="icon"][href],link[rel~="apple-touch-icon"][href]').forEach(function(el){add(el.getAttribute('href'));});
-      doc.querySelectorAll('video[src],audio[src],source[src],video[poster]').forEach(function(el){add(el.getAttribute('src'));add(el.getAttribute('poster'));});
-      doc.querySelectorAll('meta[property="og:image"],meta[name="twitter:image"],meta[property="og:image:url"]').forEach(function(el){var v=el.getAttribute('content');if(v)add(v);});
-      doc.querySelectorAll('[data-background],[data-bg-src],[data-background-image]').forEach(function(el){['data-background','data-bg-src','data-background-image'].forEach(function(a){var v=el.getAttribute(a);if(v&&!v.startsWith('{'))add(v);});});
-      doc.querySelectorAll('a[href]').forEach(function(el){var h=el.getAttribute('href');if(!h||/^(#|mailto:|tel:|javascript:|ftp:)/.test(h))return;var x=abs(base,h);if(x&&same(pageUrl,x)){var c=x.split('#')[0].replace(/\/$/,'');if(!/\.(jpe?g|png|gif|webp|svg|ico|js|css|woff|ttf|pdf|zip|mp4|mp3)(\?|$)/i.test(c))links[c]=true;}});
-      var fa=Object.keys(found);
-      if (fa.length > 0) { L('  HTML parse: ' + fa.length + ' assets, ' + Object.keys(links).length + ' links', 'ok'); return {assets:fa, links:Object.keys(links)}; }
-    }
-  }
-
-  // Fallback: URL extraction from text
-  var re=/https?:\/\/[^\s"'<>\]\)\\,]+/g, m;
-  while((m=re.exec(html))!==null){var u=m[0].replace(/[.,;:)'">\]]+$/,'');if(u.length>10)found[u]=true;}
-  var fa=Object.keys(found);
-  L('  URL extract: ' + fa.length + ' assets', fa.length > 0 ? 'ok' : 'lwarn');
-  return {assets:fa, links:[]};
+function extractAssets(html,pageUrl){
+  var found={},links={};
+  var doc;
+  try{doc=new DOMParser().parseFromString(html,'text/html');}catch(e){return{assets:[],links:[]};}
+  var bel=doc.querySelector('base[href]');
+  var base=bel?(abs(pageUrl,bel.getAttribute('href'))||pageUrl):pageUrl;
+  function add(h){if(!h)return;var x=abs(base,h);if(x&&!x.startsWith('data:'))found[x]=true;}
+  function addss(v){if(!v)return;v.split(',').forEach(function(s){var p=s.trim().split(/\s+/)[0];if(p)add(p);});}
+  doc.querySelectorAll('img').forEach(function(el){['src','data-src','data-lazy-src','data-original','data-img','data-image','data-bg','data-lazy'].forEach(function(a){var v=el.getAttribute(a);if(v)add(v);});['srcset','data-srcset'].forEach(function(a){var v=el.getAttribute(a);if(v)addss(v);});});
+  doc.querySelectorAll('picture source').forEach(function(el){var v=el.getAttribute('srcset');if(v)addss(v);var s=el.getAttribute('src');if(s)add(s);});
+  doc.querySelectorAll('[style]').forEach(function(el){var m,re=/url\(\s*['"]?([^'")\s]+)['"]?\s*\)/gi,s=el.getAttribute('style')||'';while((m=re.exec(s))!==null)add(m[1]);});
+  doc.querySelectorAll('style').forEach(function(el){var m,re=/url\(\s*['"]?([^'")\s]+)['"]?\s*\)/gi,css=el.textContent||'';while((m=re.exec(css))!==null){if(!m[1].startsWith('data:'))add(m[1]);}});
+  doc.querySelectorAll('script[src]').forEach(function(el){add(el.getAttribute('src'));});
+  doc.querySelectorAll('link[rel="stylesheet"][href],link[as="style"][href]').forEach(function(el){add(el.getAttribute('href'));});
+  doc.querySelectorAll('link[as="font"][href],link[rel="preload"][href],link[rel~="icon"][href],link[rel~="apple-touch-icon"][href]').forEach(function(el){add(el.getAttribute('href'));});
+  doc.querySelectorAll('video[src],audio[src],source[src],video[poster]').forEach(function(el){add(el.getAttribute('src'));add(el.getAttribute('poster'));});
+  doc.querySelectorAll('meta[property="og:image"],meta[name="twitter:image"],meta[property="og:image:url"]').forEach(function(el){var v=el.getAttribute('content');if(v)add(v);});
+  doc.querySelectorAll('[data-background],[data-bg-src],[data-background-image]').forEach(function(el){['data-background','data-bg-src','data-background-image'].forEach(function(a){var v=el.getAttribute(a);if(v&&!v.startsWith('{'))add(v);});});
+  doc.querySelectorAll('a[href]').forEach(function(el){var h=el.getAttribute('href');if(!h||/^(#|mailto:|tel:|javascript:|ftp:)/.test(h))return;var x=abs(base,h);if(x&&same(pageUrl,x)){var c=x.split('#')[0].replace(/\/$/,'');if(!/\.(jpe?g|png|gif|webp|svg|ico|js|css|woff|ttf|pdf|zip|mp4|mp3)(\?|$)/i.test(c))links[c]=true;}});
+  var fa=Object.keys(found),fl=Object.keys(links);
+  L('  '+fa.length+' assets, '+fl.length+' links'+(fa.length>0?'':''),'ok');
+  return{assets:fa,links:fl};
 }
 
 async function run(){
   if(going)return;
-  var apiKey=document.getElementById('apiKey').value.trim();
-  if(!apiKey){st('Enter your API key first.');return;}
   var raw=document.getElementById('urlInput').value.trim();
   if(!raw){st('Enter a URL first.');return;}
   var start;try{start=new URL(raw).href;}catch(e){st('Invalid URL.');return;}
@@ -278,13 +190,13 @@ async function run(){
     st('Crawling '+(pages+1)+'/'+maxP+': '+item.url);
     pr(((pages+1)/maxP)*85);
     L('\n--- '+item.url);
-    fetchPage(apiKey,item.url).then(function(html){
+    fetchPage(item.url).then(function(html){
       pages++;
       var r=extractAssets(html,item.url);
       for(var i=0;i<r.assets.length;i++){var au=r.assets[i];if(!amap[au])amap[au]={type:gtype(au),pages:[]};if(amap[au].pages.indexOf(item.url)===-1)amap[au].pages.push(item.url);}
       if(doSub&&item.d<maxD){for(var j=0;j<r.links.length;j++){var lk=r.links[j];if(!visited[lk])queue.push({url:lk,d:item.d+1});}}
-      setTimeout(next,800);
-    }).catch(function(e){fails++;L('FAILED: '+e.message,'err');setTimeout(next,400);});
+      setTimeout(next,400);
+    }).catch(function(e){fails++;L('FAILED: '+e.message,'err');setTimeout(next,300);});
   }
 
   function done(){
