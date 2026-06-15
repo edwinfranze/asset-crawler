@@ -30,7 +30,7 @@ select{background:var(--sur);border:1px solid var(--bdr);border-radius:8px;color
 .chip b{font-size:18px;font-weight:700;color:var(--txt)}
 .chip.fail b{color:var(--err)}
 .ftrs{display:flex;gap:8px;margin-top:20px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch}
-.fb{background:var(--sur);border:1px solid var(--bdr);border-radius:20px;color:var(--mut);font-family:var(--f);font-size:13px;padding:6px 14px;cursor:pointer;white-space:nowrap;flex-shrink:0;-webkit-tap-highlight-color:transparent}
+.fb{background:var(--sur);border:1px solid var(--bdr);border-radius:20px;color:var(--mut);font-family:var(--f);font-size:13px;padding:6px 14px;cursor:pointer;white-space:nowrap;flex-shrink:0}
 .fb.on{background:var(--adim);border-color:var(--acc);color:var(--acc)}
 #results{margin-top:16px}
 .sec{margin-bottom:24px}
@@ -39,7 +39,6 @@ select{background:var(--sur);border:1px solid var(--bdr);border-radius:8px;color
 .card{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--r);overflow:hidden;position:relative}
 .thumb{width:100%;aspect-ratio:16/10;overflow:hidden;background:#0d1117;display:flex;align-items:center;justify-content:center}
 .thumb img{width:100%;height:100%;object-fit:cover}
-.brk{display:none;font-size:28px}
 .othumb{padding:14px 12px 8px;display:flex;align-items:center;gap:8px}
 .aico{font-size:24px;flex-shrink:0}
 .aext{font-size:11px;font-weight:700;color:var(--acc);text-transform:uppercase;letter-spacing:.5px}
@@ -58,11 +57,10 @@ select{background:var(--sur);border:1px solid var(--bdr);border-radius:8px;color
 </head>
 <body>
 <h1>Asset Visibility Crawler</h1>
-<p class="sub">Shows all publicly visible assets on a website. Hosted on GitHub Pages.</p>
+<p class="sub">Crawls a website and shows all publicly visible assets.</p>
 
 <p class="lbl">Anthropic API Key</p>
 <input type="password" id="apiKey" placeholder="sk-ant-api03-..." autocomplete="off" spellcheck="false">
-
 <input type="url" id="urlInput" value="https://paulus.unicoz.nl/" placeholder="https://example.com" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false">
 
 <div class="opts">
@@ -119,22 +117,13 @@ function gext(u){var m=u.split('?')[0].match(/\.([a-z0-9]{1,6})$/i);return m?m[1
 function gname(u){try{var p=new URL(u).pathname;return decodeURIComponent(p.split('/').pop()||p||u);}catch(e){return u;}}
 function abs(base,h){if(!h||/^(data:|blob:|javascript:)/.test(h))return null;try{return new URL(h,base).href;}catch(e){return null;}}
 function same(base,u){try{return new URL(u).hostname===new URL(base).hostname;}catch(e){return false;}}
-
-function L(m,c){
-  c=c||'';
-  var t=new Date().toLocaleTimeString('en',{hour12:false,hour:'2-digit',minute:'2-digit',second:'2-digit'});
-  logs.push('<span class="l'+c+'">['+t+'] '+eh(m)+'</span>');
-  var b=document.getElementById('logbox');
-  b.innerHTML=logs.join('<br>');
-  b.scrollTop=b.scrollHeight;
-}
 function eh(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function L(m,c){c=c||'';var t=new Date().toLocaleTimeString('en',{hour12:false,hour:'2-digit',minute:'2-digit',second:'2-digit'});logs.push('<span class="l'+c+'">['+t+'] '+eh(m)+'</span>');var b=document.getElementById('logbox');b.innerHTML=logs.join('<br>');b.scrollTop=b.scrollHeight;}
 function st(m){document.getElementById('status').textContent=m;}
 function pr(v){document.getElementById('pbw').style.display='block';document.getElementById('pb').style.width=Math.min(100,v)+'%';}
 function toggleLog(){var b=document.getElementById('logbox');b.classList.toggle('on');document.getElementById('logbtn').textContent=b.classList.contains('on')?'Hide debug log':'Show debug log';}
 
-async function apiCall(apiKey, messages) {
-  L('POST /v1/messages ('+messages.length+' messages)');
+async function apiCall(apiKey, body) {
   var resp = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -143,103 +132,152 @@ async function apiCall(apiKey, messages) {
       'anthropic-version': '2023-06-01',
       'anthropic-dangerous-direct-browser-access': 'true'
     },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 4000,
-      messages: messages
-    })
+    body: JSON.stringify(body)
   });
   L('HTTP '+resp.status);
   var raw = await resp.text();
-  L('Response ('+raw.length+'c): '+raw.slice(0,120));
+  L('Response ('+raw.length+'c): '+raw.slice(0,100));
   var data;
   try{data=JSON.parse(raw);}catch(e){throw new Error('JSON parse: '+raw.slice(0,200));}
   if(data.type==='error')throw new Error(data.error.type+': '+data.error.message);
-  if(!data.content)throw new Error('No content: '+raw.slice(0,200));
+  if(!data.content)throw new Error('No content');
   return data;
 }
 
-async function fetchPage(apiKey, targetUrl) {
-  L('Fetching page: '+targetUrl);
-
-  // Step 1: ask Claude to list assets it knows about this URL
-  var data = await apiCall(apiKey, [{
-    role: 'user',
-    content: 'I need to audit the website at '+targetUrl+'. '+
-      'Based on common website structures and what you know about this URL, '+
-      'list all the asset URLs that would likely be publicly visible on this page. '+
-      'Include images, CSS files, JavaScript files, fonts, and any media files. '+
-      'Format your entire response as a valid JSON array of strings (just the URLs). '+
-      'Example: ["https://example.com/style.css","https://example.com/logo.png"]. '+
-      'Only output the JSON array, nothing else.'
-  }]);
-
-  var text='';
-  for(var i=0;i<data.content.length;i++){
-    var b=data.content[i];
+function collectText(content) {
+  var text = '';
+  for (var i=0; i<content.length; i++) {
+    var b = content[i];
     L('  block['+i+']: '+b.type+(b.type==='text'?' ('+b.text.length+'c)':''));
-    if(b.type==='text')text+=b.text;
+    if (b.type === 'text') text += b.text;
+    if (b.type === 'web_search_tool_result') {
+      var items = b.content || [];
+      for (var j=0; j<items.length; j++) {
+        var item = items[j];
+        L('    search_result['+j+']: type='+item.type+(item.url?' url='+item.url.slice(0,60):''));
+        if (item.page_content) { text += '\n' + item.page_content; L('    page_content: '+item.page_content.length+'c','ok'); }
+        if (item.content) { text += '\n' + item.content; }
+      }
+    }
   }
-  L('Got text: '+text.length+'c');
   return text;
 }
 
-function parseUrls(text, pageUrl) {
-  var found={}, links={};
+async function fetchPage(apiKey, targetUrl) {
+  L('Fetching: '+targetUrl);
 
-  // Try JSON array of strings
-  var m=text.match(/\[[\s\S]*?\]/);
-  if(m){
-    try{
-      var arr=JSON.parse(m[0]);
-      for(var i=0;i<arr.length;i++){
-        var item=arr[i];
-        var u=typeof item==='string'?item:(item&&item.url?item.url:null);
-        if(u){var x=abs(pageUrl,u);if(x)found[x]=true;}
-      }
-      if(Object.keys(found).length>0){
-        L('  Parsed '+Object.keys(found).length+' URLs from JSON','ok');
-        return{assets:Object.keys(found),links:Object.keys(links)};
-      }
-    }catch(e){L('  JSON parse failed: '+e.message,'warn');}
+  // First attempt: with web_search tool
+  var body1 = {
+    model: 'claude-sonnet-4-6',
+    max_tokens: 8000,
+    tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+    messages: [{
+      role: 'user',
+      content: 'Use web_search to fetch the page at ' + targetUrl + '. Return the complete raw HTML source of that page only, nothing else.'
+    }]
+  };
+
+  var data1 = await apiCall(apiKey, body1);
+  L('stop='+data1.stop_reason+' blocks='+data1.content.length);
+
+  var html = collectText(data1.content);
+
+  // If tool_use, do second turn
+  if (data1.stop_reason === 'tool_use' && html.length < 500) {
+    L('Second turn...');
+    var toolUses = data1.content.filter(function(b){return b.type==='tool_use';});
+    var toolResults = toolUses.map(function(b){
+      return {type:'tool_result', tool_use_id:b.id, content:'Search complete. Now return the full raw HTML of '+targetUrl+' including all asset references (img src, link href, script src).'};
+    });
+    var body2 = {
+      model: 'claude-sonnet-4-6',
+      max_tokens: 8000,
+      tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+      messages: [
+        body1.messages[0],
+        {role:'assistant', content:data1.content},
+        {role:'user', content:toolResults}
+      ]
+    };
+    var data2 = await apiCall(apiKey, body2);
+    L('turn2 stop='+data2.stop_reason+' blocks='+data2.content.length);
+    html += collectText(data2.content);
   }
 
-  // Fallback: extract any URLs from text
-  var re=/https?:\/\/[^\s"'<>\]\)]+/g,match;
-  while((match=re.exec(text))!==null){
-    var u=match[0].replace(/[.,;:)'"]+$/,'');
-    found[u]=true;
-    if(same(pageUrl,u)&&!/\.(jpe?g|png|gif|webp|svg|ico|js|css|woff|ttf|pdf|zip|mp4|mp3)(\?|$)/i.test(u))links[u]=true;
+  L('Total content: '+html.length+'c');
+
+  // If response looks like HTML, parse it
+  if (html.trim().startsWith('<') || html.includes('<html') || html.includes('<body') || html.includes('<img')) {
+    L('Detected HTML, parsing...','ok');
+    return {type:'html', content:html};
   }
-  L('  Extracted '+Object.keys(found).length+' URLs via regex');
-  return{assets:Object.keys(found),links:Object.keys(links)};
+
+  // Otherwise treat as text description and extract URLs
+  L('Treating as text, extracting URLs...','lwarn');
+  return {type:'text', content:html};
 }
 
-function extract(html,pageUrl){
-  var found={},links={};
-  var doc;try{doc=new DOMParser().parseFromString(html,'text/html');}catch(e){return{assets:[],links:[]};}
+function extractFromHtml(html, pageUrl) {
+  var found={}, links={};
+  var doc;
+  try{doc=new DOMParser().parseFromString(html,'text/html');}
+  catch(e){L('DOMParser failed: '+e.message,'err');return{assets:[],links:[]};}
+
   var bel=doc.querySelector('base[href]');
   var base=bel?(abs(pageUrl,bel.getAttribute('href'))||pageUrl):pageUrl;
+
   function add(h){if(!h)return;var x=abs(base,h);if(x&&!x.startsWith('data:'))found[x]=true;}
-  function addss(v){v.split(',').forEach(function(s){var p=s.trim().split(/\s+/)[0];if(p)add(p);});}
+  function addss(v){if(!v)return;v.split(',').forEach(function(s){var p=s.trim().split(/\s+/)[0];if(p)add(p);});}
+
   doc.querySelectorAll('img').forEach(function(el){
     ['src','data-src','data-lazy-src','data-original','data-img','data-image','data-bg','data-lazy'].forEach(function(a){var v=el.getAttribute(a);if(v)add(v);});
     ['srcset','data-srcset'].forEach(function(a){var v=el.getAttribute(a);if(v)addss(v);});
   });
-  doc.querySelectorAll('[style]').forEach(function(el){var m,re=/url\(\s*['"]?([^'")\s]+)['"]?\s*\)/gi,s=el.getAttribute('style')||'';while((m=re.exec(s))!==null)add(m[1]);});
-  doc.querySelectorAll('style').forEach(function(el){var m,re=/url\(\s*['"]?([^'")\s]+)['"]?\s*\)/gi,css=el.textContent||'';while((m=re.exec(css))!==null){if(!m[1].startsWith('data:'))add(m[1]);}});
+  doc.querySelectorAll('picture source').forEach(function(el){
+    var v=el.getAttribute('srcset');if(v)addss(v);
+    var s=el.getAttribute('src');if(s)add(s);
+  });
+  doc.querySelectorAll('[style]').forEach(function(el){
+    var m,re=/url\(\s*['"]?([^'")\s]+)['"]?\s*\)/gi,s=el.getAttribute('style')||'';
+    while((m=re.exec(s))!==null)add(m[1]);
+  });
+  doc.querySelectorAll('style').forEach(function(el){
+    var m,re=/url\(\s*['"]?([^'")\s]+)['"]?\s*\)/gi,css=el.textContent||'';
+    while((m=re.exec(css))!==null){if(!m[1].startsWith('data:'))add(m[1]);}
+  });
   doc.querySelectorAll('script[src]').forEach(function(el){add(el.getAttribute('src'));});
   doc.querySelectorAll('link[rel="stylesheet"][href],link[as="style"][href]').forEach(function(el){add(el.getAttribute('href'));});
-  doc.querySelectorAll('link[as="font"][href],link[rel~="icon"][href]').forEach(function(el){add(el.getAttribute('href'));});
+  doc.querySelectorAll('link[as="font"][href],link[rel="preload"][href],link[rel~="icon"][href]').forEach(function(el){add(el.getAttribute('href'));});
   doc.querySelectorAll('video[src],audio[src],source[src],video[poster]').forEach(function(el){add(el.getAttribute('src'));add(el.getAttribute('poster'));});
-  doc.querySelectorAll('meta[property="og:image"],meta[name="twitter:image"]').forEach(function(el){var v=el.getAttribute('content');if(v)add(v);});
+  doc.querySelectorAll('meta[property="og:image"],meta[name="twitter:image"],meta[property="og:image:url"]').forEach(function(el){var v=el.getAttribute('content');if(v)add(v);});
+  doc.querySelectorAll('[data-background],[data-bg-src],[data-background-image]').forEach(function(el){
+    ['data-background','data-bg-src','data-background-image'].forEach(function(a){var v=el.getAttribute(a);if(v&&!v.startsWith('{'))add(v);});
+  });
   doc.querySelectorAll('a[href]').forEach(function(el){
     var h=el.getAttribute('href');
     if(!h||/^(#|mailto:|tel:|javascript:|ftp:)/.test(h))return;
     var x=abs(base,h);
     if(x&&same(pageUrl,x)){var c=x.split('#')[0].replace(/\/$/,'');if(!/\.(jpe?g|png|gif|webp|svg|ico|js|css|woff|ttf|pdf|zip|mp4|mp3)(\?|$)/i.test(c))links[c]=true;}
   });
-  return{assets:Object.keys(found),links:Object.keys(links)};
+
+  var fa=Object.keys(found), fl=Object.keys(links);
+  L('  HTML parse: '+fa.length+' assets, '+fl.length+' links','ok');
+  return{assets:fa, links:fl};
+}
+
+function extractFromText(text, pageUrl) {
+  var found={}, links={};
+  var re=/https?:\/\/[^\s"'<>\]\)\\]+/g, m;
+  while((m=re.exec(text))!==null){
+    var u=m[0].replace(/[.,;:)'"\]]+$/,'');
+    if(u.length>10){
+      found[u]=true;
+      if(same(pageUrl,u)&&!/\.(jpe?g|png|gif|webp|svg|ico|js|css|woff|ttf|pdf|zip|mp4|mp3)(\?|$)/i.test(u))links[u]=true;
+    }
+  }
+  var fa=Object.keys(found), fl=Object.keys(links);
+  L('  Text extract: '+fa.length+' assets, '+fl.length+' links');
+  return{assets:fa, links:fl};
 }
 
 async function run(){
@@ -274,12 +312,14 @@ async function run(){
     visited[item.url]=true;
     st('Crawling '+(pages+1)+'/'+maxP+': '+item.url);
     pr(((pages+1)/maxP)*85);
-    L('\n--- '+item.url);
+    L('\n--- PAGE: '+item.url);
 
-    fetchPage(apiKey,item.url).then(function(text){
+    fetchPage(apiKey,item.url).then(function(result){
       pages++;
-      var r=parseUrls(text,item.url);
-      L('  Assets:'+r.assets.length+' Links:'+r.links.length);
+      var r = result.type==='html'
+        ? extractFromHtml(result.content, item.url)
+        : extractFromText(result.content, item.url);
+
       for(var i=0;i<r.assets.length;i++){
         var au=r.assets[i];
         if(!amap[au])amap[au]={type:gtype(au),pages:[]};
@@ -309,8 +349,14 @@ async function run(){
     document.getElementById('statsRow').style.display='flex';
     document.getElementById('logbtn').style.display='inline';
     if(fails>0){document.getElementById('sFails').textContent=fails;document.getElementById('sFailChip').style.display='flex';}
-    if(assets.length>0){document.getElementById('ftrs').style.display='flex';render('all');st('Done. '+pages+' page'+(pages!==1?'s':'')+' crawled, '+assets.length+' assets found'+(fails>0?', '+fails+' failed':'')+'.');}
-    else{document.getElementById('results').innerHTML='<div class="empty">No assets found'+(fails>0?' ('+fails+' pages failed)':'')+'. Check the debug log.</div>';st('No assets found.');}
+    if(assets.length>0){
+      document.getElementById('ftrs').style.display='flex';
+      render('all');
+      st('Done. '+pages+' page'+(pages!==1?'s':'')+' crawled, '+assets.length+' assets found'+(fails>0?', '+fails+' failed':'')+'.');
+    }else{
+      document.getElementById('results').innerHTML='<div class="empty">No assets found. Check the debug log.</div>';
+      st('No assets found.');
+    }
     document.getElementById('goBtn').disabled=false;
     going=false;
   }
@@ -332,16 +378,13 @@ function render(f){
     for(var i=0;i<g[t].length;i++){
       var a=g[t][i],su=a.url.replace(/"/g,'%22'),fn=eh(a.filename),pu=eh(a.pages[0]||'');
       if(a.type==='image'){
-        h+='<div class="card">'+
-          '<div class="thumb">'+
+        h+='<div class="card"><div class="thumb">'+
           '<img src="'+su+'" loading="lazy" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'flex\';this.closest(\'.card\').querySelector(\'.badge\').className=\'badge berr\';this.closest(\'.card\').querySelector(\'.badge\').textContent=\'BLOCKED\'">'+
-          '<div class="brk" style="display:none">🚫</div>'+
-          '</div>'+
-          '<div class="ameta"><div class="afn">'+fn+'</div><div class="apg">'+pu+'</div></div>'+
+          '<div style="display:none;width:100%;height:100%;align-items:center;justify-content:center;font-size:28px">🚫</div>'+
+          '</div><div class="ameta"><div class="afn">'+fn+'</div><div class="apg">'+pu+'</div></div>'+
           '<span class="badge bok">VISIBLE</span></div>';
       }else{
-        h+='<div class="card">'+
-          '<div class="othumb"><span class="aico">'+(ICONS[a.type]||'📦')+'</span><span class="aext">'+eh(a.ext)+'</span></div>'+
+        h+='<div class="card"><div class="othumb"><span class="aico">'+(ICONS[a.type]||'📦')+'</span><span class="aext">'+eh(a.ext)+'</span></div>'+
           '<div class="ameta"><div class="afn">'+fn+'</div><div class="apg">'+pu+'</div></div>'+
           '<span class="badge bok">VISIBLE</span></div>';
       }
