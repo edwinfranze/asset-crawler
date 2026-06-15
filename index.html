@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Asset Visibility Crawler</title>
+<style>
+:root{--bg:#0d1117;--sur:#161b22;--bdr:#30363d;--acc:#58a6ff;--adim:#1f3556;--txt:#e6edf3;--mut:#8b949e;--ok:#3fb950;--okbg:#1a3a2a;--err:#f85149;--errbg:#3a1a1a;--warn:#d29922;--r:10px;--f:-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--txt);font-family:var(--f);font-size:15px;min-height:100vh;padding:20px 16px 40px}
+h1{font-size:22px;font-weight:700;letter-spacing:-.4px;margin-bottom:4px}
+.sub{font-size:13px;color:var(--mut);line-height:1.5;margin-bottom:20px}
+.lbl{font-size:12px;color:var(--mut);margin-bottom:5px}
+input[type=url],input[type=password]{width:100%;background:var(--sur);border:1px solid var(--bdr);border-radius:var(--r);color:var(--txt);font-family:var(--f);font-size:15px;padding:12px 14px;outline:none;-webkit-appearance:none;margin-bottom:10px}
+input:focus{border-color:var(--acc)}
+input::placeholder{color:var(--mut)}
+.opts{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+.olbl{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--mut);cursor:pointer}
+.olbl input[type=checkbox]{accent-color:var(--acc);width:16px;height:16px}
+select{background:var(--sur);border:1px solid var(--bdr);border-radius:8px;color:var(--txt);font-family:var(--f);font-size:13px;padding:6px 10px;outline:none;-webkit-appearance:none;cursor:pointer}
+#goBtn{width:100%;background:var(--acc);border:none;border-radius:var(--r);color:#0d1117;font-family:var(--f);font-size:16px;font-weight:700;padding:14px;cursor:pointer;-webkit-tap-highlight-color:transparent;margin-bottom:6px}
+#goBtn:disabled{opacity:.4;cursor:not-allowed}
+.note{font-size:11px;color:var(--mut);line-height:1.5;margin-bottom:4px}
+.note b{color:var(--warn)}
+#status{margin-top:12px;font-size:13px;color:var(--mut);min-height:18px;word-break:break-all}
+.pbw{background:var(--sur);border-radius:4px;height:4px;margin-top:8px;overflow:hidden;display:none}
+.pb{background:var(--acc);height:100%;width:0%;transition:width .3s}
+.stats{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}
+.chip{background:var(--sur);border:1px solid var(--bdr);border-radius:8px;padding:8px 12px;font-size:12px;color:var(--mut);display:flex;flex-direction:column;gap:2px}
+.chip b{font-size:18px;font-weight:700;color:var(--txt)}
+.chip.fail b{color:var(--err)}
+.ftrs{display:flex;gap:8px;margin-top:20px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch}
+.fb{background:var(--sur);border:1px solid var(--bdr);border-radius:20px;color:var(--mut);font-family:var(--f);font-size:13px;padding:6px 14px;cursor:pointer;white-space:nowrap;flex-shrink:0;-webkit-tap-highlight-color:transparent}
+.fb.on{background:var(--adim);border-color:var(--acc);color:var(--acc)}
+#results{margin-top:16px}
+.sec{margin-bottom:24px}
+.sech{font-size:12px;font-weight:600;color:var(--mut);letter-spacing:.5px;text-transform:uppercase;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--bdr)}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.card{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--r);overflow:hidden;position:relative}
+.thumb{width:100%;aspect-ratio:16/10;overflow:hidden;background:#0d1117;display:flex;align-items:center;justify-content:center}
+.thumb img{width:100%;height:100%;object-fit:cover}
+.brk{display:none;font-size:28px}
+.othumb{padding:14px 12px 8px;display:flex;align-items:center;gap:8px}
+.aico{font-size:24px;flex-shrink:0}
+.aext{font-size:11px;font-weight:700;color:var(--acc);text-transform:uppercase;letter-spacing:.5px}
+.ameta{padding:8px 10px 10px}
+.afn{font-size:11px;color:var(--txt);word-break:break-all;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.apg{font-size:10px;color:var(--mut);margin-top:3px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.badge{position:absolute;top:6px;right:6px;border-radius:6px;font-size:10px;font-weight:700;padding:2px 6px;text-transform:uppercase}
+.bok{background:var(--okbg);color:var(--ok)}
+.berr{background:var(--errbg);color:var(--err)}
+.empty{text-align:center;padding:40px 20px;color:var(--mut);font-size:14px;line-height:1.7}
+.logbtn{font-size:12px;color:var(--mut);background:none;border:none;cursor:pointer;margin-top:8px;text-decoration:underline;font-family:var(--f);display:none}
+.logbox{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--r);font-size:11px;color:var(--mut);padding:10px 12px;margin-top:8px;max-height:220px;overflow-y:auto;font-family:monospace;line-height:1.7;display:none}
+.logbox.on{display:block}
+.lerr{color:var(--err)}.lok{color:var(--ok)}.lwarn{color:var(--warn)}
+</style>
+</head>
+<body>
+<h1>Asset Visibility Crawler</h1>
+<p class="sub">Shows all publicly visible assets on a website. Hosted on GitHub Pages.</p>
+
+<p class="lbl">Anthropic API Key</p>
+<input type="password" id="apiKey" placeholder="sk-ant-api03-..." autocomplete="off" spellcheck="false">
+
+<input type="url" id="urlInput" value="https://paulus.unicoz.nl/" placeholder="https://example.com" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false">
+
+<div class="opts">
+  <label class="olbl"><input type="checkbox" id="doSub" checked> Subpages</label>
+  <label class="olbl">Depth: <select id="maxD"><option>1</option><option selected>2</option><option>3</option></select></label>
+  <label class="olbl">Max pages: <select id="maxP"><option>3</option><option selected>5</option><option>10</option><option>20</option></select></label>
+</div>
+
+<button id="goBtn" onclick="run()">Start Crawl</button>
+<p class="note"><b>Key stored in memory only.</b> Revoke after use at console.anthropic.com.</p>
+
+<div id="status"></div>
+<div class="pbw" id="pbw"><div class="pb" id="pb"></div></div>
+<button class="logbtn" id="logbtn" onclick="toggleLog()">Show debug log</button>
+<div class="logbox" id="logbox"></div>
+
+<div class="stats" id="statsRow" style="display:none">
+  <div class="chip"><b id="sPages">0</b>Pages</div>
+  <div class="chip"><b id="sAssets">0</b>Assets</div>
+  <div class="chip"><b id="sImgs">0</b>Images</div>
+  <div class="chip"><b id="sOther">0</b>Other</div>
+  <div class="chip fail" id="sFailChip" style="display:none"><b id="sFails">0</b>Failed</div>
+</div>
+
+<div class="ftrs" id="ftrs" style="display:none">
+  <button class="fb on" onclick="filt('all',this)">All</button>
+  <button class="fb" onclick="filt('image',this)">Images</button>
+  <button class="fb" onclick="filt('script',this)">Scripts</button>
+  <button class="fb" onclick="filt('style',this)">Styles</button>
+  <button class="fb" onclick="filt('font',this)">Fonts</button>
+  <button class="fb" onclick="filt('media',this)">Media</button>
+  <button class="fb" onclick="filt('other',this)">Other</button>
+</div>
+
+<div id="results"></div>
+
+<script>
+var ICONS={image:'🖼',style:'🎨',script:'⚙️',font:'🔤',media:'🎬',document:'📄',other:'📦'};
+var LABELS={image:'Images',style:'Stylesheets',script:'Scripts',font:'Fonts',media:'Media',document:'Documents',other:'Other'};
+var ORDER=['image','style','script','font','media','document','other'];
+var assets=[],curFilt='all',going=false,logs=[];
+
+function gtype(u){
+  var x=u.toLowerCase().split('?')[0].split('#')[0];
+  if(/\.(jpe?g|png|gif|webp|svg|ico|avif|bmp|tiff?)(\b|$)/.test(x))return'image';
+  if(/\.(mjs|jsx?)(\b|$)/.test(x))return'script';
+  if(/\.css(\b|$)/.test(x))return'style';
+  if(/\.(woff2?|ttf|otf|eot)(\b|$)/.test(x))return'font';
+  if(/\.(mp4|webm|ogg|mp3|wav|avi|mov|flac|aac|m4v|m4a)(\b|$)/.test(x))return'media';
+  if(/\.(pdf|docx?|xlsx?|pptx?|zip|rar|gz)(\b|$)/.test(x))return'document';
+  return'other';
+}
+function gext(u){var m=u.split('?')[0].match(/\.([a-z0-9]{1,6})$/i);return m?m[1].toUpperCase():'?';}
+function gname(u){try{var p=new URL(u).pathname;return decodeURIComponent(p.split('/').pop()||p||u);}catch(e){return u;}}
+function abs(base,h){if(!h||/^(data:|blob:|javascript:)/.test(h))return null;try{return new URL(h,base).href;}catch(e){return null;}}
+function same(base,u){try{return new URL(u).hostname===new URL(base).hostname;}catch(e){return false;}}
+
+function L(m,c){
+  c=c||'';
+  var t=new Date().toLocaleTimeString('en',{hour12:false,hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  logs.push('<span class="l'+c+'">['+t+'] '+eh(m)+'</span>');
+  var b=document.getElementById('logbox');
+  b.innerHTML=logs.join('<br>');
+  b.scrollTop=b.scrollHeight;
+}
+function eh(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function st(m){document.getElementById('status').textContent=m;}
+function pr(v){document.getElementById('pbw').style.display='block';document.getElementById('pb').style.width=Math.min(100,v)+'%';}
+function toggleLog(){var b=document.getElementById('logbox');b.classList.toggle('on');document.getElementById('logbtn').textContent=b.classList.contains('on')?'Hide debug log':'Show debug log';}
+
+async function apiCall(apiKey, messages) {
+  L('POST /v1/messages ('+messages.length+' messages)');
+  var resp = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 4000,
+      messages: messages
+    })
+  });
+  L('HTTP '+resp.status);
+  var raw = await resp.text();
+  L('Response ('+raw.length+'c): '+raw.slice(0,120));
+  var data;
+  try{data=JSON.parse(raw);}catch(e){throw new Error('JSON parse: '+raw.slice(0,200));}
+  if(data.type==='error')throw new Error(data.error.type+': '+data.error.message);
+  if(!data.content)throw new Error('No content: '+raw.slice(0,200));
+  return data;
+}
+
+async function fetchPage(apiKey, targetUrl) {
+  L('Fetching page: '+targetUrl);
+
+  // Step 1: ask Claude to list assets it knows about this URL
+  var data = await apiCall(apiKey, [{
+    role: 'user',
+    content: 'I need to audit the website at '+targetUrl+'. '+
+      'Based on common website structures and what you know about this URL, '+
+      'list all the asset URLs that would likely be publicly visible on this page. '+
+      'Include images, CSS files, JavaScript files, fonts, and any media files. '+
+      'Format your entire response as a valid JSON array of strings (just the URLs). '+
+      'Example: ["https://example.com/style.css","https://example.com/logo.png"]. '+
+      'Only output the JSON array, nothing else.'
+  }]);
+
+  var text='';
+  for(var i=0;i<data.content.length;i++){
+    var b=data.content[i];
+    L('  block['+i+']: '+b.type+(b.type==='text'?' ('+b.text.length+'c)':''));
+    if(b.type==='text')text+=b.text;
+  }
+  L('Got text: '+text.length+'c');
+  return text;
+}
+
+function parseUrls(text, pageUrl) {
+  var found={}, links={};
+
+  // Try JSON array of strings
+  var m=text.match(/\[[\s\S]*?\]/);
+  if(m){
+    try{
+      var arr=JSON.parse(m[0]);
+      for(var i=0;i<arr.length;i++){
+        var item=arr[i];
+        var u=typeof item==='string'?item:(item&&item.url?item.url:null);
+        if(u){var x=abs(pageUrl,u);if(x)found[x]=true;}
+      }
+      if(Object.keys(found).length>0){
+        L('  Parsed '+Object.keys(found).length+' URLs from JSON','ok');
+        return{assets:Object.keys(found),links:Object.keys(links)};
+      }
+    }catch(e){L('  JSON parse failed: '+e.message,'warn');}
+  }
+
+  // Fallback: extract any URLs from text
+  var re=/https?:\/\/[^\s"'<>\]\)]+/g,match;
+  while((match=re.exec(text))!==null){
+    var u=match[0].replace(/[.,;:)'"]+$/,'');
+    found[u]=true;
+    if(same(pageUrl,u)&&!/\.(jpe?g|png|gif|webp|svg|ico|js|css|woff|ttf|pdf|zip|mp4|mp3)(\?|$)/i.test(u))links[u]=true;
+  }
+  L('  Extracted '+Object.keys(found).length+' URLs via regex');
+  return{assets:Object.keys(found),links:Object.keys(links)};
+}
+
+function extract(html,pageUrl){
+  var found={},links={};
+  var doc;try{doc=new DOMParser().parseFromString(html,'text/html');}catch(e){return{assets:[],links:[]};}
+  var bel=doc.querySelector('base[href]');
+  var base=bel?(abs(pageUrl,bel.getAttribute('href'))||pageUrl):pageUrl;
+  function add(h){if(!h)return;var x=abs(base,h);if(x&&!x.startsWith('data:'))found[x]=true;}
+  function addss(v){v.split(',').forEach(function(s){var p=s.trim().split(/\s+/)[0];if(p)add(p);});}
+  doc.querySelectorAll('img').forEach(function(el){
+    ['src','data-src','data-lazy-src','data-original','data-img','data-image','data-bg','data-lazy'].forEach(function(a){var v=el.getAttribute(a);if(v)add(v);});
+    ['srcset','data-srcset'].forEach(function(a){var v=el.getAttribute(a);if(v)addss(v);});
+  });
+  doc.querySelectorAll('[style]').forEach(function(el){var m,re=/url\(\s*['"]?([^'")\s]+)['"]?\s*\)/gi,s=el.getAttribute('style')||'';while((m=re.exec(s))!==null)add(m[1]);});
+  doc.querySelectorAll('style').forEach(function(el){var m,re=/url\(\s*['"]?([^'")\s]+)['"]?\s*\)/gi,css=el.textContent||'';while((m=re.exec(css))!==null){if(!m[1].startsWith('data:'))add(m[1]);}});
+  doc.querySelectorAll('script[src]').forEach(function(el){add(el.getAttribute('src'));});
+  doc.querySelectorAll('link[rel="stylesheet"][href],link[as="style"][href]').forEach(function(el){add(el.getAttribute('href'));});
+  doc.querySelectorAll('link[as="font"][href],link[rel~="icon"][href]').forEach(function(el){add(el.getAttribute('href'));});
+  doc.querySelectorAll('video[src],audio[src],source[src],video[poster]').forEach(function(el){add(el.getAttribute('src'));add(el.getAttribute('poster'));});
+  doc.querySelectorAll('meta[property="og:image"],meta[name="twitter:image"]').forEach(function(el){var v=el.getAttribute('content');if(v)add(v);});
+  doc.querySelectorAll('a[href]').forEach(function(el){
+    var h=el.getAttribute('href');
+    if(!h||/^(#|mailto:|tel:|javascript:|ftp:)/.test(h))return;
+    var x=abs(base,h);
+    if(x&&same(pageUrl,x)){var c=x.split('#')[0].replace(/\/$/,'');if(!/\.(jpe?g|png|gif|webp|svg|ico|js|css|woff|ttf|pdf|zip|mp4|mp3)(\?|$)/i.test(c))links[c]=true;}
+  });
+  return{assets:Object.keys(found),links:Object.keys(links)};
+}
+
+async function run(){
+  if(going)return;
+  var apiKey=document.getElementById('apiKey').value.trim();
+  if(!apiKey){st('Enter your API key first.');return;}
+  var raw=document.getElementById('urlInput').value.trim();
+  if(!raw){st('Enter a URL first.');return;}
+  var start;try{start=new URL(raw).href;}catch(e){st('Invalid URL. Include https://');return;}
+
+  var doSub=document.getElementById('doSub').checked;
+  var maxD=parseInt(document.getElementById('maxD').value);
+  var maxP=parseInt(document.getElementById('maxP').value);
+
+  going=true;assets=[];logs=[];curFilt='all';
+  document.getElementById('goBtn').disabled=true;
+  document.getElementById('statsRow').style.display='none';
+  document.getElementById('ftrs').style.display='none';
+  document.getElementById('results').innerHTML='';
+  document.getElementById('pbw').style.display='none';
+  document.getElementById('logbox').innerHTML='';
+  document.getElementById('logbox').classList.remove('on');
+  document.getElementById('logbtn').style.display='none';
+  st('Starting...');
+
+  var visited={},queue=[{url:start,d:0}],amap={},pages=0,fails=0;
+
+  function next(){
+    if(queue.length===0||pages>=maxP){done();return;}
+    var item=queue.shift();
+    if(visited[item.url]){next();return;}
+    visited[item.url]=true;
+    st('Crawling '+(pages+1)+'/'+maxP+': '+item.url);
+    pr(((pages+1)/maxP)*85);
+    L('\n--- '+item.url);
+
+    fetchPage(apiKey,item.url).then(function(text){
+      pages++;
+      var r=parseUrls(text,item.url);
+      L('  Assets:'+r.assets.length+' Links:'+r.links.length);
+      for(var i=0;i<r.assets.length;i++){
+        var au=r.assets[i];
+        if(!amap[au])amap[au]={type:gtype(au),pages:[]};
+        if(amap[au].pages.indexOf(item.url)===-1)amap[au].pages.push(item.url);
+      }
+      if(doSub&&item.d<maxD){
+        for(var j=0;j<r.links.length;j++){var lk=r.links[j];if(!visited[lk])queue.push({url:lk,d:item.d+1});}
+      }
+      setTimeout(next,800);
+    }).catch(function(e){
+      fails++;
+      L('FAILED: '+e.message,'err');
+      setTimeout(next,400);
+    });
+  }
+
+  function done(){
+    pr(100);
+    assets=[];
+    var keys=Object.keys(amap);
+    for(var i=0;i<keys.length;i++){var u=keys[i];assets.push({url:u,type:amap[u].type,pages:amap[u].pages,filename:gname(u),ext:gext(u)});}
+    var imgs=0;for(var i=0;i<assets.length;i++){if(assets[i].type==='image')imgs++;}
+    document.getElementById('sPages').textContent=pages;
+    document.getElementById('sAssets').textContent=assets.length;
+    document.getElementById('sImgs').textContent=imgs;
+    document.getElementById('sOther').textContent=assets.length-imgs;
+    document.getElementById('statsRow').style.display='flex';
+    document.getElementById('logbtn').style.display='inline';
+    if(fails>0){document.getElementById('sFails').textContent=fails;document.getElementById('sFailChip').style.display='flex';}
+    if(assets.length>0){document.getElementById('ftrs').style.display='flex';render('all');st('Done. '+pages+' page'+(pages!==1?'s':'')+' crawled, '+assets.length+' assets found'+(fails>0?', '+fails+' failed':'')+'.');}
+    else{document.getElementById('results').innerHTML='<div class="empty">No assets found'+(fails>0?' ('+fails+' pages failed)':'')+'. Check the debug log.</div>';st('No assets found.');}
+    document.getElementById('goBtn').disabled=false;
+    going=false;
+  }
+
+  next();
+}
+
+function filt(t,btn){curFilt=t;document.querySelectorAll('.fb').forEach(function(b){b.classList.remove('on');});btn.classList.add('on');render(t);}
+
+function render(f){
+  var c=document.getElementById('results');
+  var list=f==='all'?assets:assets.filter(function(a){return a.type===f;});
+  if(!list.length){c.innerHTML='<div class="empty">No assets of this type.</div>';return;}
+  var g={};for(var i=0;i<list.length;i++){var t=list[i].type;if(!g[t])g[t]=[];g[t].push(list[i]);}
+  var h='';
+  for(var oi=0;oi<ORDER.length;oi++){
+    var t=ORDER[oi];if(!g[t])continue;
+    h+='<div class="sec"><div class="sech">'+LABELS[t]+' ('+g[t].length+')</div><div class="grid">';
+    for(var i=0;i<g[t].length;i++){
+      var a=g[t][i],su=a.url.replace(/"/g,'%22'),fn=eh(a.filename),pu=eh(a.pages[0]||'');
+      if(a.type==='image'){
+        h+='<div class="card">'+
+          '<div class="thumb">'+
+          '<img src="'+su+'" loading="lazy" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'flex\';this.closest(\'.card\').querySelector(\'.badge\').className=\'badge berr\';this.closest(\'.card\').querySelector(\'.badge\').textContent=\'BLOCKED\'">'+
+          '<div class="brk" style="display:none">🚫</div>'+
+          '</div>'+
+          '<div class="ameta"><div class="afn">'+fn+'</div><div class="apg">'+pu+'</div></div>'+
+          '<span class="badge bok">VISIBLE</span></div>';
+      }else{
+        h+='<div class="card">'+
+          '<div class="othumb"><span class="aico">'+(ICONS[a.type]||'📦')+'</span><span class="aext">'+eh(a.ext)+'</span></div>'+
+          '<div class="ameta"><div class="afn">'+fn+'</div><div class="apg">'+pu+'</div></div>'+
+          '<span class="badge bok">VISIBLE</span></div>';
+      }
+    }
+    h+='</div></div>';
+  }
+  c.innerHTML=h;
+}
+</script>
+</body>
+</html>
