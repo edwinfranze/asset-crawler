@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Image Crawler v1.2</title>
+<title>Image Crawler v1.3</title>
 <style>
-:root{--bg:#0d1117;--sur:#161b22;--bdr:#30363d;--acc:#58a6ff;--adim:#1f3556;--txt:#e6edf3;--mut:#8b949e;--ok:#3fb950;--okbg:#1a3a2a;--err:#f85149;--errbg:#3a1a1a;--warn:#d29922;--warnbg:#2a2010;--r:10px;--f:-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif}
+:root{--bg:#0d1117;--sur:#161b22;--bdr:#30363d;--acc:#58a6ff;--adim:#1f3556;--txt:#e6edf3;--mut:#8b949e;--ok:#3fb950;--okbg:#1a3a2a;--err:#f85149;--errbg:#3a1a1a;--warn:#d29922;--warnbg:#2a2010;--exp:#ff6b35;--expbg:#3a1a00;--r:10px;--f:-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif}
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--bg);color:var(--txt);font-family:var(--f);font-size:15px;min-height:100vh;padding:20px 16px 40px}
 h1{font-size:22px;font-weight:700;letter-spacing:-.4px;margin-bottom:4px}
@@ -18,27 +18,31 @@ input::placeholder{color:var(--mut)}
 .olbl input[type=checkbox]{accent-color:var(--acc);width:16px;height:16px}
 select{background:var(--sur);border:1px solid var(--bdr);border-radius:8px;color:var(--txt);font-family:var(--f);font-size:13px;padding:6px 10px;outline:none;-webkit-appearance:none;cursor:pointer}
 .btnrow{display:flex;gap:10px;margin-bottom:6px}
-#goBtn{flex:1;background:var(--acc);border:none;border-radius:var(--r);color:#0d1117;font-family:var(--f);font-size:15px;font-weight:700;padding:14px;cursor:pointer;-webkit-tap-highlight-color:transparent}
-#goBtn:disabled{opacity:.4;cursor:not-allowed}
-#wpBtn{flex:1;background:var(--sur);border:1px solid var(--acc);border-radius:var(--r);color:var(--acc);font-family:var(--f);font-size:15px;font-weight:700;padding:14px;cursor:pointer;-webkit-tap-highlight-color:transparent}
-#wpBtn:disabled{opacity:.4;cursor:not-allowed}
+#goBtn,#wpBtn{flex:1;border:none;border-radius:var(--r);font-family:var(--f);font-size:15px;font-weight:700;padding:14px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+#goBtn{background:var(--acc);color:#0d1117}
+#wpBtn{background:var(--sur);border:1px solid var(--acc);color:var(--acc)}
+#goBtn:disabled,#wpBtn:disabled{opacity:.4;cursor:not-allowed}
 .note{font-size:11px;color:var(--mut);line-height:1.5}
 #status{margin-top:12px;font-size:13px;color:var(--mut);min-height:18px;word-break:break-all}
 .pbw{background:var(--sur);border-radius:4px;height:4px;margin-top:8px;overflow:hidden;display:none}
 .pb{background:var(--acc);height:100%;width:0%;transition:width .2s}
-.stats{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}
-.chip{background:var(--sur);border:1px solid var(--bdr);border-radius:8px;padding:8px 12px;font-size:12px;color:var(--mut);display:flex;flex-direction:column;gap:2px}
-.chip b{font-size:18px;font-weight:700;color:var(--txt)}
-.chip.fail b{color:var(--err)}
+.stats{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
+.chip{background:var(--sur);border:1px solid var(--bdr);border-radius:8px;padding:8px 10px;font-size:11px;color:var(--mut);display:flex;flex-direction:column;gap:2px;min-width:56px}
+.chip b{font-size:17px;font-weight:700;color:var(--txt)}
+.chip.vis b{color:var(--ok)}
+.chip.exp b{color:var(--exp)}
+.chip.blk b{color:var(--err)}
 #results{margin-top:16px}
 .sech{font-size:12px;font-weight:600;color:var(--mut);letter-spacing:.5px;text-transform:uppercase;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--bdr)}
 .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
 .card{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--r);overflow:hidden;position:relative}
-.thumb{width:100%;aspect-ratio:16/10;overflow:hidden;background:#0d1117;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.card.exposed{border-color:var(--exp)}
+.thumb{width:100%;aspect-ratio:16/10;overflow:hidden;background:#0d1117;display:flex;align-items:center;justify-content:center}
 .thumb img{width:100%;height:100%;object-fit:cover}
-.blocked-icon{display:none;flex-direction:column;align-items:center;justify-content:center;gap:6px;width:100%;height:100%}
-.blocked-icon span{font-size:28px}
-.blocked-icon a{font-size:10px;color:var(--acc);text-decoration:underline;text-align:center;padding:0 8px}
+.status-icon{display:none;flex-direction:column;align-items:center;justify-content:center;gap:6px;width:100%;height:100%;padding:8px}
+.status-icon .ico{font-size:26px}
+.status-icon .lbl{font-size:10px;color:var(--mut);text-align:center;line-height:1.4}
+.status-icon a{font-size:10px;color:var(--acc);text-decoration:underline;text-align:center}
 .ameta{padding:8px 10px 10px}
 .afn{font-size:11px;color:var(--txt);word-break:break-all;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .apg{font-size:10px;color:var(--mut);margin-top:3px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
@@ -46,18 +50,19 @@ select{background:var(--sur);border:1px solid var(--bdr);border-radius:8px;color
 .badge{position:absolute;top:6px;right:6px;border-radius:6px;font-size:10px;font-weight:700;padding:2px 6px;text-transform:uppercase}
 .bok{background:var(--okbg);color:var(--ok)}
 .berr{background:var(--errbg);color:var(--err)}
-.bwp{background:#1a2a3a;color:#58a6ff}
-.empty{text-align:center;padding:40px 20px;color:var(--mut);font-size:14px;line-height:1.7}
+.bwp{background:#1a2a3a;color:var(--acc)}
+.bexp{background:var(--expbg);color:var(--exp)}
+.brem{background:var(--warnbg);color:var(--warn)}
 .logrow{display:flex;align-items:center;gap:8px;margin-top:8px}
 .logbtn{font-size:12px;color:var(--mut);background:none;border:none;cursor:pointer;text-decoration:underline;font-family:var(--f)}
 .copybtn{font-size:11px;color:var(--acc);background:var(--adim);border:1px solid var(--acc);border-radius:6px;padding:3px 10px;cursor:pointer;font-family:var(--f);display:none}
 .logbox{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--r);font-size:11px;color:var(--mut);padding:10px 12px;margin-top:6px;max-height:220px;overflow-y:auto;font-family:monospace;line-height:1.7;display:none}
 .logbox.on{display:block}
-.lerr{color:var(--err)}.lok{color:var(--ok)}.lwarn{color:var(--warn)}
+.lerr{color:var(--err)}.lok{color:var(--ok)}.lwarn{color:var(--warn)}.lexp{color:var(--exp)}
 </style>
 </head>
 <body>
-<h1>Image Crawler <span style="font-size:13px;font-weight:400;color:var(--mut)">v1.2</span></h1>
+<h1>Image Crawler <span style="font-size:13px;font-weight:400;color:var(--mut)">v1.3</span></h1>
 <p class="sub">Crawls a website and shows all publicly visible images.</p>
 
 <input type="url" id="urlInput" value="https://paulus.unicoz.nl/" placeholder="https://example.com" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false">
@@ -85,17 +90,20 @@ select{background:var(--sur);border:1px solid var(--bdr);border-radius:8px;color
 <div class="logbox" id="logbox"></div>
 
 <div class="stats" id="statsRow" style="display:none">
-  <div class="chip"><b id="sPages">0</b>Pages</div>
-  <div class="chip"><b id="sImgs">0</b>Images</div>
-  <div class="chip"><b id="sVis">0</b>Visible</div>
-  <div class="chip fail" id="sFailChip" style="display:none"><b id="sFails">0</b>Blocked</div>
+  <div class="chip"><b id="sTotal">0</b>Total</div>
+  <div class="chip vis"><b id="sVis">0</b>Visible</div>
+  <div class="chip exp" id="sExpChip" style="display:none"><b id="sExp">0</b>Exposed</div>
+  <div class="chip blk" id="sBlkChip" style="display:none"><b id="sBlk">0</b>Blocked</div>
+  <div class="chip" id="sRemChip" style="display:none"><b id="sRem">0</b>Removed</div>
+  <div class="chip" id="sPgChip"><b id="sPages">0</b>Pages</div>
 </div>
 
 <div id="results"></div>
 
 <script>
-var images={},going=false,logs=[],visited={},queue=[],activeCount=0,pages=0,fails=0,maxPages=20,concur=8,doSub=true,maxD=2;
-var visibleCount=0,blockedCount=0;
+var images={},going=false,logs=[],visited={},queue=[],activeCount=0,pages=0,fails=0;
+var maxPages=20,concur=8,doSub=true,maxD=2;
+var counts={visible:0,exposed:0,blocked:0,removed:0};
 
 function isImage(u){return/\.(jpe?g|png|gif|webp|svg|ico|avif|bmp|tiff?)(\?|$)/i.test(u.split('#')[0]);}
 function gname(u){try{var p=new URL(u).pathname;return decodeURIComponent(p.split('/').pop()||p||u);}catch(e){return u;}}
@@ -103,11 +111,30 @@ function directUrl(u){return u.split('?')[0].replace(/-\d+x\d+(\.(?:jpe?g|png|gi
 function abs(base,h){if(!h||/^(data:|blob:|javascript:)/.test(h))return null;try{return new URL(h,base).href;}catch(e){return null;}}
 function same(base,u){try{return new URL(u).hostname===new URL(base).hostname;}catch(e){return false;}}
 function eh(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
-function L(m,c){c=c||'';var t=new Date().toLocaleTimeString('en',{hour12:false,hour:'2-digit',minute:'2-digit',second:'2-digit'});var line='['+t+'] '+m;logs.push({line:line,c:c});var b=document.getElementById('logbox');b.innerHTML=logs.map(function(l){return'<span class="l'+l.c+'">'+eh(l.line)+'</span>';}).join('<br>');b.scrollTop=b.scrollHeight;}
+
+function L(m,c){
+  c=c||'';
+  var t=new Date().toLocaleTimeString('en',{hour12:false,hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  logs.push({line:'['+t+'] '+m,c:c});
+  var b=document.getElementById('logbox');
+  b.innerHTML=logs.map(function(l){return'<span class="l'+l.c+'">'+eh(l.line)+'</span>';}).join('<br>');
+  b.scrollTop=b.scrollHeight;
+}
 function st(m){document.getElementById('status').textContent=m;}
 function pr(v){document.getElementById('pbw').style.display='block';document.getElementById('pb').style.width=Math.min(100,v)+'%';}
 function toggleLog(){var b=document.getElementById('logbox');b.classList.toggle('on');document.getElementById('logbtn').textContent=b.classList.contains('on')?'Hide log':'Show log';}
-function copyLog(){var text=logs.map(function(l){return l.line;}).join('\n');if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(text).then(function(){var btn=document.getElementById('copybtn');btn.textContent='Copied!';setTimeout(function(){btn.textContent='Copy log';},2000);});}else{var ta=document.createElement('textarea');ta.value=text;ta.style.cssText='position:fixed;opacity:0';document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);var btn=document.getElementById('copybtn');btn.textContent='Copied!';setTimeout(function(){btn.textContent='Copy log';},2000);}}
+function copyLog(){
+  var text=logs.map(function(l){return l.line;}).join('\n');
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(function(){
+      var btn=document.getElementById('copybtn');btn.textContent='Copied!';setTimeout(function(){btn.textContent='Copy log';},2000);
+    });
+  } else {
+    var ta=document.createElement('textarea');ta.value=text;ta.style.cssText='position:fixed;opacity:0';
+    document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);
+    var btn=document.getElementById('copybtn');btn.textContent='Copied!';setTimeout(function(){btn.textContent='Copy log';},2000);
+  }
+}
 
 var PROXIES=[
   function(u){return'https://api.allorigins.win/raw?url='+encodeURIComponent(u);},
@@ -130,21 +157,44 @@ async function fetchUrl(targetUrl){
   throw new Error(lastErr||'All proxies failed');
 }
 
-function updateStatsDisplay(){
-  document.getElementById('sImgs').textContent=Object.keys(images).length;
+// Check attachment page status (410/404/200)
+async function checkAttachmentPage(url){
+  if(!url)return null;
+  try{
+    var resp=await fetch(PROXIES[0](url),{headers:{'Accept':'text/html'}});
+    return resp.status;
+  }catch(e){return null;}
+}
+
+// Check if image file itself is directly accessible
+async function checkImageDirect(imgUrl){
+  try{
+    var resp=await fetch(PROXIES[0](imgUrl),{headers:{'Accept':'image/*,*/*'}});
+    if(resp.ok){
+      var ct=resp.headers.get('content-type')||'';
+      return ct.includes('image')||ct.includes('octet');
+    }
+    return false;
+  }catch(e){return false;}
+}
+
+function updateStats(){
+  document.getElementById('sTotal').textContent=Object.keys(images).length;
+  document.getElementById('sVis').textContent=counts.visible;
   document.getElementById('sPages').textContent=pages;
-  document.getElementById('sVis').textContent=visibleCount;
-  if(blockedCount>0){document.getElementById('sFails').textContent=blockedCount;document.getElementById('sFailChip').style.display='flex';}
+  if(counts.exposed>0){document.getElementById('sExp').textContent=counts.exposed;document.getElementById('sExpChip').style.display='flex';}
+  if(counts.blocked>0){document.getElementById('sBlk').textContent=counts.blocked;document.getElementById('sBlkChip').style.display='flex';}
+  if(counts.removed>0){document.getElementById('sRem').textContent=counts.removed;document.getElementById('sRemChip').style.display='flex';}
   document.getElementById('statsRow').style.display='flex';
 }
 
 function initUI(){
   images={};logs=[];visited={};queue=[];activeCount=0;pages=0;fails=0;
-  visibleCount=0;blockedCount=0;
+  counts={visible:0,exposed:0,blocked:0,removed:0};
   document.getElementById('goBtn').disabled=true;
   document.getElementById('wpBtn').disabled=true;
   document.getElementById('statsRow').style.display='none';
-  document.getElementById('sFailChip').style.display='none';
+  ['sExpChip','sBlkChip','sRemChip'].forEach(function(id){document.getElementById(id).style.display='none';});
   document.getElementById('results').innerHTML='<div class="sech">IMAGES</div><div class="grid" id="grid"></div>';
   document.getElementById('pbw').style.display='none';
   document.getElementById('logbox').innerHTML='';
@@ -154,65 +204,100 @@ function initUI(){
   document.getElementById('logbtn').textContent='Show log';
 }
 
-function addImage(url, sourceLabel, badge, attachmentPageUrl){
-  badge=badge||'bok';
-  var clean=directUrl(url);
+function addImage(imgUrl, sourceLabel, badgeClass, attachmentPageUrl){
+  var clean=directUrl(imgUrl);
   if(images[clean])return;
-  images[clean]={source:sourceLabel,attachmentPage:attachmentPageUrl||''};
+  images[clean]={source:sourceLabel,attachPage:attachmentPageUrl||'',status:'pending'};
 
   var fn=eh(gname(clean));
   var su=clean.replace(/"/g,'%22');
-
-  // Source label: if we have an attachment page, show it as link
-  var sourceHtml;
-  if(attachmentPageUrl){
-    sourceHtml='<a href="'+eh(attachmentPageUrl)+'" target="_blank" rel="noopener">'+eh(attachmentPageUrl.replace(/https?:\/\//,'').slice(0,40))+'</a>';
-  } else {
-    sourceHtml=eh(sourceLabel.replace(/https?:\/\//,'').slice(0,40));
-  }
+  var sourceHtml=attachmentPageUrl
+    ?'<a href="'+eh(attachmentPageUrl)+'" target="_blank" rel="noopener">'+eh(attachmentPageUrl.replace(/https?:\/\//,'').slice(0,40))+'</a>'
+    :eh(sourceLabel.replace(/https?:\/\//,'').slice(0,40));
 
   var card=document.createElement('div');
   card.className='card';
+  card.id='img-'+Object.keys(images).length;
   card.dataset.imgUrl=clean;
   card.dataset.attachPage=attachmentPageUrl||'';
 
   card.innerHTML=
     '<a href="'+su+'" target="_blank" rel="noopener" style="display:block;text-decoration:none">'+
       '<div class="thumb">'+
-        '<img src="'+su+'" loading="lazy" onload="onImgLoad(this)" onerror="onImgError(this)">'+
-        '<div class="blocked-icon">'+
-          '<span>🔒</span>'+
-          (attachmentPageUrl?'<a href="'+eh(attachmentPageUrl)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()">View on site</a>':'')+''+
+        '<img src="'+su+'" loading="lazy" onload="onLoad(this)" onerror="onError(this)">'+
+        '<div class="status-icon" id="si-'+Object.keys(images).length+'">'+
+          '<span class="ico">⏳</span>'+
+          '<span class="lbl">Checking...</span>'+
         '</div>'+
       '</div>'+
     '</a>'+
-    '<div class="ameta">'+
-      '<div class="afn">'+fn+'</div>'+
-      '<div class="apg">'+sourceHtml+'</div>'+
-    '</div>'+
-    '<span class="badge '+badge+'">VISIBLE</span>';
+    '<div class="ameta"><div class="afn">'+fn+'</div><div class="apg">'+sourceHtml+'</div></div>'+
+    '<span class="badge '+badgeClass+'">VISIBLE</span>';
 
   document.getElementById('grid').appendChild(card);
-  updateStatsDisplay();
+  updateStats();
 }
 
-function onImgLoad(img){
-  var badge=img.closest('.card').querySelector('.badge');
+function onLoad(img){
+  var card=img.closest('.card');
+  var badge=card.querySelector('.badge');
   badge.className='badge bok';
   badge.textContent='VISIBLE';
-  visibleCount++;
-  updateStatsDisplay();
+  img.closest('.thumb').querySelector('.status-icon').style.display='none';
+  counts.visible++;
+  updateStats();
 }
 
-function onImgError(img){
+async function onError(img){
   img.style.display='none';
   var card=img.closest('.card');
-  card.querySelector('.blocked-icon').style.display='flex';
   var badge=card.querySelector('.badge');
-  badge.className='badge berr';
-  badge.textContent='BLOCKED';
-  blockedCount++;
-  updateStatsDisplay();
+  var si=card.querySelector('.status-icon');
+  si.style.display='flex';
+
+  var imgUrl=card.dataset.imgUrl;
+  var attachPage=card.dataset.attachPage;
+
+  // Step 1: check attachment page status
+  badge.className='badge brem';
+  badge.textContent='CHECKING...';
+  si.innerHTML='<span class="ico">🔍</span><span class="lbl">Checking page status...</span>';
+
+  var pageStatus=await checkAttachmentPage(attachPage);
+  L('Attachment page status for '+gname(imgUrl)+': '+pageStatus);
+
+  if(pageStatus===410){
+    // Page is gone - now check if image file itself is still accessible
+    si.innerHTML='<span class="ico">🔍</span><span class="lbl">Page removed (410). Testing file access...</span>';
+    var fileAccessible=await checkImageDirect(imgUrl);
+    L('Direct file access for '+gname(imgUrl)+': '+(fileAccessible?'ACCESSIBLE':'blocked'),'lexp');
+
+    if(fileAccessible){
+      // EXPOSED: page removed but file still accessible - security finding!
+      badge.className='badge bexp';
+      badge.textContent='EXPOSED';
+      card.classList.add('exposed');
+      si.innerHTML='<span class="ico">⚠️</span><span class="lbl">Page removed but file still accessible!</span>'+
+        (attachPage?'<a href="'+eh(attachPage)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()">View page (410)</a>':'');
+      counts.exposed++;
+      L('EXPOSED: '+imgUrl+' - page gone but file accessible!','lexp');
+    } else {
+      // Page removed AND file blocked - truly gone
+      badge.className='badge brem';
+      badge.textContent='REMOVED';
+      si.innerHTML='<span class="ico">🗑️</span><span class="lbl">Page removed (410), file blocked</span>'+
+        (attachPage?'<a href="'+eh(attachPage)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()">View page (410)</a>':'');
+      counts.removed++;
+    }
+  } else {
+    // Not 410 - just blocked (403 or other)
+    badge.className='badge berr';
+    badge.textContent='BLOCKED';
+    si.innerHTML='<span class="ico">🔒</span><span class="lbl">Access denied</span>'+
+      (attachPage?'<a href="'+eh(attachPage)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()">View on site</a>':'');
+    counts.blocked++;
+  }
+  updateStats();
 }
 
 // === WP REST API MODE ===
@@ -243,19 +328,18 @@ async function runWP(){
         if(src)addImage(src,'WP Media Library','bwp',attachPage);
       }
       total+=items.length;
-      pr(Math.min(90,10+(page*15)));
+      pr(Math.min(70,10+(page*15)));
       page++;
       if(items.length<100)break;
       await new Promise(function(r){setTimeout(r,200);});
     }
-    pr(100);
-    st('Done. '+Object.keys(images).length+' images found ('+total+' media items). '+visibleCount+' visible, '+blockedCount+' blocked.');
-    L('Complete: '+visibleCount+' visible, '+blockedCount+' blocked','ok');
+    L('All media fetched. Browser now loading images and checking statuses...','ok');
+    st('Loading '+Object.keys(images).length+' images and checking statuses...');
   }catch(e){
     L('Error: '+e.message,'err');
     st('Error: '+e.message);
   }
-  updateStatsDisplay();
+  updateStats();
   document.getElementById('goBtn').disabled=false;
   document.getElementById('wpBtn').disabled=false;
   going=false;
@@ -285,11 +369,6 @@ function extractFromHtml(html,pageUrl){
   return{imgs:Array.from(imgs),links:Array.from(links)};
 }
 
-function updateCrawlStatus(){
-  st('Crawled '+pages+'/'+maxPages+' pages, '+Object.keys(images).length+' images. Active: '+activeCount+', Queue: '+queue.length);
-  pr((pages/maxPages)*90);
-}
-
 function processQueue(){
   while(activeCount<concur&&queue.length>0&&pages+activeCount<maxPages){
     var item=queue.shift();
@@ -298,11 +377,19 @@ function processQueue(){
     activeCount++;
     crawlPage(item);
   }
-  if(activeCount===0&&queue.length===0){finishCrawl();}
+  if(activeCount===0&&queue.length===0){
+    pr(100);updateStats();
+    st('Done. '+pages+' pages crawled, '+Object.keys(images).length+' images found.');
+    document.getElementById('goBtn').disabled=false;
+    document.getElementById('wpBtn').disabled=false;
+    going=false;
+  }
 }
 
 async function crawlPage(item){
   L('Crawling: '+item.url);
+  st('Crawled '+pages+'/'+maxPages+' pages. Active: '+activeCount+', Queue: '+queue.length);
+  pr((pages/maxPages)*80);
   try{
     var html=await fetchUrl(item.url);
     pages++;
@@ -310,20 +397,9 @@ async function crawlPage(item){
     L('  '+r.imgs.length+' images, '+r.links.length+' links','ok');
     for(var i=0;i<r.imgs.length;i++){addImage(r.imgs[i],item.url,'bok',null);}
     if(doSub&&item.d<maxD){for(var j=0;j<r.links.length;j++){var lk=r.links[j];if(!visited[lk]&&pages+activeCount+queue.length<maxPages*3)queue.push({url:lk,d:item.d+1});}}
-  }catch(e){
-    fails++;L('FAILED: '+item.url+' => '+e.message,'err');
-  }
+  }catch(e){fails++;L('FAILED: '+item.url+' => '+e.message,'err');}
   activeCount--;
-  updateCrawlStatus();
   processQueue();
-}
-
-function finishCrawl(){
-  pr(100);updateStatsDisplay();
-  st('Done. '+pages+' pages crawled, '+Object.keys(images).length+' images. '+visibleCount+' visible, '+blockedCount+' blocked.'+(fails>0?' '+fails+' pages failed.':''));
-  document.getElementById('goBtn').disabled=false;
-  document.getElementById('wpBtn').disabled=false;
-  going=false;
 }
 
 function runCrawl(){
@@ -340,6 +416,8 @@ function runCrawl(){
   queue.push({url:start,d:0});
   processQueue();
 }
+
+function runWP_btn(){runWP();}
 </script>
 </body>
 </html>
