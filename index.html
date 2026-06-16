@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Image Crawler v1.1</title>
+<title>Image Crawler v1.2</title>
 <style>
 :root{--bg:#0d1117;--sur:#161b22;--bdr:#30363d;--acc:#58a6ff;--adim:#1f3556;--txt:#e6edf3;--mut:#8b949e;--ok:#3fb950;--okbg:#1a3a2a;--err:#f85149;--errbg:#3a1a1a;--warn:#d29922;--warnbg:#2a2010;--r:10px;--f:-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif}
 *{box-sizing:border-box;margin:0;padding:0}
@@ -30,14 +30,15 @@ select{background:var(--sur);border:1px solid var(--bdr);border-radius:8px;color
 .chip{background:var(--sur);border:1px solid var(--bdr);border-radius:8px;padding:8px 12px;font-size:12px;color:var(--mut);display:flex;flex-direction:column;gap:2px}
 .chip b{font-size:18px;font-weight:700;color:var(--txt)}
 .chip.fail b{color:var(--err)}
-.chip.warn b{color:var(--warn)}
 #results{margin-top:16px}
 .sech{font-size:12px;font-weight:600;color:var(--mut);letter-spacing:.5px;text-transform:uppercase;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--bdr)}
 .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
 .card{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--r);overflow:hidden;position:relative}
-.card.referer-ok{border-color:var(--warn)}
-.thumb{width:100%;aspect-ratio:16/10;overflow:hidden;background:#0d1117;display:flex;align-items:center;justify-content:center}
+.thumb{width:100%;aspect-ratio:16/10;overflow:hidden;background:#0d1117;display:flex;align-items:center;justify-content:center;cursor:pointer}
 .thumb img{width:100%;height:100%;object-fit:cover}
+.blocked-icon{display:none;flex-direction:column;align-items:center;justify-content:center;gap:6px;width:100%;height:100%}
+.blocked-icon span{font-size:28px}
+.blocked-icon a{font-size:10px;color:var(--acc);text-decoration:underline;text-align:center;padding:0 8px}
 .ameta{padding:8px 10px 10px}
 .afn{font-size:11px;color:var(--txt);word-break:break-all;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .apg{font-size:10px;color:var(--mut);margin-top:3px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
@@ -46,7 +47,6 @@ select{background:var(--sur);border:1px solid var(--bdr);border-radius:8px;color
 .bok{background:var(--okbg);color:var(--ok)}
 .berr{background:var(--errbg);color:var(--err)}
 .bwp{background:#1a2a3a;color:#58a6ff}
-.bwarn{background:var(--warnbg);color:var(--warn)}
 .empty{text-align:center;padding:40px 20px;color:var(--mut);font-size:14px;line-height:1.7}
 .logrow{display:flex;align-items:center;gap:8px;margin-top:8px}
 .logbtn{font-size:12px;color:var(--mut);background:none;border:none;cursor:pointer;text-decoration:underline;font-family:var(--f)}
@@ -57,7 +57,7 @@ select{background:var(--sur);border:1px solid var(--bdr);border-radius:8px;color
 </style>
 </head>
 <body>
-<h1>Image Crawler <span style="font-size:13px;font-weight:400;color:var(--mut)">v1.1</span></h1>
+<h1>Image Crawler <span style="font-size:13px;font-weight:400;color:var(--mut)">v1.2</span></h1>
 <p class="sub">Crawls a website and shows all publicly visible images.</p>
 
 <input type="url" id="urlInput" value="https://paulus.unicoz.nl/" placeholder="https://example.com" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false">
@@ -87,7 +87,7 @@ select{background:var(--sur);border:1px solid var(--bdr);border-radius:8px;color
 <div class="stats" id="statsRow" style="display:none">
   <div class="chip"><b id="sPages">0</b>Pages</div>
   <div class="chip"><b id="sImgs">0</b>Images</div>
-  <div class="chip warn" id="sRefChip" style="display:none"><b id="sRef">0</b>Via referer</div>
+  <div class="chip"><b id="sVis">0</b>Visible</div>
   <div class="chip fail" id="sFailChip" style="display:none"><b id="sFails">0</b>Blocked</div>
 </div>
 
@@ -95,7 +95,7 @@ select{background:var(--sur);border:1px solid var(--bdr);border-radius:8px;color
 
 <script>
 var images={},going=false,logs=[],visited={},queue=[],activeCount=0,pages=0,fails=0,maxPages=20,concur=8,doSub=true,maxD=2;
-var visibleCount=0,refererCount=0,blockedCount=0;
+var visibleCount=0,blockedCount=0;
 
 function isImage(u){return/\.(jpe?g|png|gif|webp|svg|ico|avif|bmp|tiff?)(\?|$)/i.test(u.split('#')[0]);}
 function gname(u){try{var p=new URL(u).pathname;return decodeURIComponent(p.split('/').pop()||p||u);}catch(e){return u;}}
@@ -130,40 +130,20 @@ async function fetchUrl(targetUrl){
   throw new Error(lastErr||'All proxies failed');
 }
 
-// Try to fetch image with referer header via proxy
-async function tryWithReferer(imgUrl, refererUrl){
-  // allorigins supports a referer param in some configs; we try corsproxy with custom header
-  var proxyUrl='https://corsproxy.io/?url='+encodeURIComponent(imgUrl);
-  try{
-    var resp=await fetch(proxyUrl,{
-      headers:{
-        'Accept':'image/*,*/*',
-        'Referer':refererUrl,
-        'Origin':new URL(refererUrl).origin
-      }
-    });
-    if(resp.ok&&resp.headers.get('content-type')&&resp.headers.get('content-type').includes('image')){
-      return true;
-    }
-    return false;
-  }catch(e){return false;}
-}
-
 function updateStatsDisplay(){
   document.getElementById('sImgs').textContent=Object.keys(images).length;
   document.getElementById('sPages').textContent=pages;
-  if(refererCount>0){document.getElementById('sRef').textContent=refererCount;document.getElementById('sRefChip').style.display='flex';}
+  document.getElementById('sVis').textContent=visibleCount;
   if(blockedCount>0){document.getElementById('sFails').textContent=blockedCount;document.getElementById('sFailChip').style.display='flex';}
   document.getElementById('statsRow').style.display='flex';
 }
 
 function initUI(){
   images={};logs=[];visited={};queue=[];activeCount=0;pages=0;fails=0;
-  visibleCount=0;refererCount=0;blockedCount=0;
+  visibleCount=0;blockedCount=0;
   document.getElementById('goBtn').disabled=true;
   document.getElementById('wpBtn').disabled=true;
   document.getElementById('statsRow').style.display='none';
-  document.getElementById('sRefChip').style.display='none';
   document.getElementById('sFailChip').style.display='none';
   document.getElementById('results').innerHTML='<div class="sech">IMAGES</div><div class="grid" id="grid"></div>';
   document.getElementById('pbw').style.display='none';
@@ -174,34 +154,41 @@ function initUI(){
   document.getElementById('logbtn').textContent='Show log';
 }
 
-function addImage(url, sourceLabel, badge, sourcePageUrl){
+function addImage(url, sourceLabel, badge, attachmentPageUrl){
   badge=badge||'bok';
   var clean=directUrl(url);
   if(images[clean])return;
-  images[clean]={source:sourceLabel,page:sourcePageUrl||''};
+  images[clean]={source:sourceLabel,attachmentPage:attachmentPageUrl||''};
 
   var fn=eh(gname(clean));
   var su=clean.replace(/"/g,'%22');
-  var pageLink=sourcePageUrl?'<a href="'+eh(sourcePageUrl)+'" target="_blank" rel="noopener">'+eh(sourcePageUrl.replace(/https?:\/\//,'').slice(0,40))+'</a>':eh(sourceLabel);
+
+  // Source label: if we have an attachment page, show it as link
+  var sourceHtml;
+  if(attachmentPageUrl){
+    sourceHtml='<a href="'+eh(attachmentPageUrl)+'" target="_blank" rel="noopener">'+eh(attachmentPageUrl.replace(/https?:\/\//,'').slice(0,40))+'</a>';
+  } else {
+    sourceHtml=eh(sourceLabel.replace(/https?:\/\//,'').slice(0,40));
+  }
 
   var card=document.createElement('div');
   card.className='card';
-  card.id='card-'+Object.keys(images).length;
   card.dataset.imgUrl=clean;
-  card.dataset.sourcePage=sourcePageUrl||'';
+  card.dataset.attachPage=attachmentPageUrl||'';
 
   card.innerHTML=
     '<a href="'+su+'" target="_blank" rel="noopener" style="display:block;text-decoration:none">'+
       '<div class="thumb">'+
-        '<img src="'+su+'" loading="lazy" '+
-          'onload="onImgLoad(this)" '+
-          'onerror="onImgError(this)">'+
-        '<div style="display:none;width:100%;height:100%;align-items:center;justify-content:center;font-size:28px">🚫</div>'+
+        '<img src="'+su+'" loading="lazy" onload="onImgLoad(this)" onerror="onImgError(this)">'+
+        '<div class="blocked-icon">'+
+          '<span>🔒</span>'+
+          (attachmentPageUrl?'<a href="'+eh(attachmentPageUrl)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()">View on site</a>':'')+''+
+        '</div>'+
       '</div>'+
     '</a>'+
     '<div class="ameta">'+
       '<div class="afn">'+fn+'</div>'+
-      '<div class="apg">'+pageLink+'</div>'+
+      '<div class="apg">'+sourceHtml+'</div>'+
     '</div>'+
     '<span class="badge '+badge+'">VISIBLE</span>';
 
@@ -210,59 +197,22 @@ function addImage(url, sourceLabel, badge, sourcePageUrl){
 }
 
 function onImgLoad(img){
-  var card=img.closest('.card');
-  var badge=card.querySelector('.badge');
+  var badge=img.closest('.card').querySelector('.badge');
   badge.className='badge bok';
   badge.textContent='VISIBLE';
   visibleCount++;
   updateStatsDisplay();
 }
 
-async function onImgError(img){
+function onImgError(img){
   img.style.display='none';
-  img.nextSibling.style.display='flex';
   var card=img.closest('.card');
+  card.querySelector('.blocked-icon').style.display='flex';
   var badge=card.querySelector('.badge');
-
-  // First mark as blocked
   badge.className='badge berr';
   badge.textContent='BLOCKED';
   blockedCount++;
   updateStatsDisplay();
-
-  // Try with referer
-  var imgUrl=card.dataset.imgUrl;
-  var sourcePage=card.dataset.sourcePage;
-  if(!sourcePage){
-    // Use site origin as referer fallback
-    try{sourcePage=new URL(imgUrl).origin+'/';}catch(e){return;}
-  }
-
-  L('Trying referer for: '+gname(imgUrl));
-  var ok=await tryWithReferer(imgUrl, sourcePage);
-  if(ok){
-    // Load via proxy blob URL
-    var proxyUrl='https://corsproxy.io/?url='+encodeURIComponent(imgUrl);
-    img.style.display='';
-    img.nextSibling.style.display='none';
-    img.src=proxyUrl;
-    img.onload=function(){
-      badge.className='badge bwarn';
-      badge.textContent='VIA REFERER';
-      card.classList.add('referer-ok');
-      blockedCount--;
-      refererCount++;
-      updateStatsDisplay();
-      L('Loaded via referer: '+gname(imgUrl),'ok');
-    };
-    img.onerror=function(){
-      img.style.display='none';
-      img.nextSibling.style.display='flex';
-      badge.className='badge berr';
-      badge.textContent='BLOCKED';
-      L('Still blocked even via proxy: '+gname(imgUrl),'err');
-    };
-  }
 }
 
 // === WP REST API MODE ===
@@ -280,7 +230,7 @@ async function runWP(){
   try{
     while(true){
       var apiUrl=base+'/wp-json/wp/v2/media?per_page=100&page='+page+'&media_type=image';
-      L('WP API page '+page+': '+apiUrl);
+      L('WP API page '+page);
       var text=await fetchUrl(apiUrl);
       var items;
       try{items=JSON.parse(text);}catch(e){throw new Error('JSON parse failed: '+text.slice(0,100));}
@@ -289,8 +239,8 @@ async function runWP(){
       for(var i=0;i<items.length;i++){
         var item=items[i];
         var src=item.source_url||'';
-        var link=item.link||'';
-        if(src)addImage(src, 'WP Media Library', 'bwp', link||base+'/');
+        var attachPage=item.link||'';
+        if(src)addImage(src,'WP Media Library','bwp',attachPage);
       }
       total+=items.length;
       pr(Math.min(90,10+(page*15)));
@@ -299,8 +249,8 @@ async function runWP(){
       await new Promise(function(r){setTimeout(r,200);});
     }
     pr(100);
-    st('Done. '+Object.keys(images).length+' images from WP Media Library ('+total+' items total).');
-    L('Complete','ok');
+    st('Done. '+Object.keys(images).length+' images found ('+total+' media items). '+visibleCount+' visible, '+blockedCount+' blocked.');
+    L('Complete: '+visibleCount+' visible, '+blockedCount+' blocked','ok');
   }catch(e){
     L('Error: '+e.message,'err');
     st('Error: '+e.message);
@@ -353,13 +303,12 @@ function processQueue(){
 
 async function crawlPage(item){
   L('Crawling: '+item.url);
-  updateCrawlStatus();
   try{
     var html=await fetchUrl(item.url);
     pages++;
     var r=extractFromHtml(html,item.url);
     L('  '+r.imgs.length+' images, '+r.links.length+' links','ok');
-    for(var i=0;i<r.imgs.length;i++){addImage(r.imgs[i],item.url,'bok',item.url);}
+    for(var i=0;i<r.imgs.length;i++){addImage(r.imgs[i],item.url,'bok',null);}
     if(doSub&&item.d<maxD){for(var j=0;j<r.links.length;j++){var lk=r.links[j];if(!visited[lk]&&pages+activeCount+queue.length<maxPages*3)queue.push({url:lk,d:item.d+1});}}
   }catch(e){
     fails++;L('FAILED: '+item.url+' => '+e.message,'err');
@@ -371,7 +320,7 @@ async function crawlPage(item){
 
 function finishCrawl(){
   pr(100);updateStatsDisplay();
-  st('Done. '+pages+' pages crawled, '+Object.keys(images).length+' images found'+(fails>0?', '+fails+' failed':'')+'.');
+  st('Done. '+pages+' pages crawled, '+Object.keys(images).length+' images. '+visibleCount+' visible, '+blockedCount+' blocked.'+(fails>0?' '+fails+' pages failed.':''));
   document.getElementById('goBtn').disabled=false;
   document.getElementById('wpBtn').disabled=false;
   going=false;
