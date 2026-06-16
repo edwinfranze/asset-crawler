@@ -205,6 +205,12 @@ function extractFromHtml(html,pageUrl){
   return{imgs:Array.from(imgs),links:Array.from(links)};
 }
 
+
+function directUrl(u){
+  // Strip WordPress image size suffixes like -300x200 to get full size original
+  var clean=u.split('?')[0].replace(/-\d+x\d+(\.(?:jpe?g|png|gif|webp|svg|avif))$/i,'$1');
+  return clean;
+}
 function addImageToResults(url,pageUrl){
   if(images[url])return;
   images[url]={page:pageUrl,broken:false};
@@ -214,7 +220,7 @@ function addImageToResults(url,pageUrl){
   var card=document.createElement('div');
   card.className='card';
   card.id='card-'+Object.keys(images).length;
-  card.innerHTML='<a href="'+su+'" target="_blank" rel="noopener" style="display:block;text-decoration:none"><div class="thumb"><img src="'+su+'" loading="lazy" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'flex\';this.closest(\'.card\').querySelector(\'.badge\').className=\'badge berr\';this.closest(\'.card\').querySelector(\'.badge\').textContent=\'BLOCKED\'"><div style="display:none;width:100%;height:100%;align-items:center;justify-content:center;font-size:28px">🚫</div></div><div class="ameta"><div class="afn">'+fn+'</div><div class="apg">'+pu+'</div></div><span class="badge bok">VISIBLE</span>';
+  card.innerHTML='<a href="'+directUrl(su)+'" target="_blank" rel="noopener" style="display:block;text-decoration:none"><div class="thumb"><img src="'+su+'" loading="lazy" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'flex\';this.closest(\'.card\').querySelector(\'.badge\').className=\'badge berr\';this.closest(\'.card\').querySelector(\'.badge\').textContent=\'BLOCKED\'"><div style="display:none;width:100%;height:100%;align-items:center;justify-content:center;font-size:28px">🚫</div></div><div class="ameta"><div class="afn">'+fn+'</div><div class="apg">'+pu+'</div></div><span class="badge bok">VISIBLE</span>';
   document.getElementById('grid').appendChild(card);
   document.getElementById('sImgs').textContent=Object.keys(images).length;
 }
