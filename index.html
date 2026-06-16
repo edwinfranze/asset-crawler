@@ -157,7 +157,7 @@ function extractFromHtml(html,pageUrl){
   var bel=doc.querySelector('base[href]');
   var base=bel?(abs(pageUrl,bel.getAttribute('href'))||pageUrl):pageUrl;
 
-  function addImg(h){if(!h)return;var x=abs(base,h);if(x&&!x.startsWith('data:'))imgs.add(x);}
+  function addImg(h){if(!h)return;if(h.startsWith('data:'))return;var x=abs(base,h);if(!x)return;if(x.startsWith('data:'))return;if(x.includes('base64'))return;var fn=x.split('?')[0].split('/').pop().toLowerCase();if(fn.length<3)return;imgs.add(x);}
   function addSS(v){if(!v)return;v.split(',').forEach(function(s){var p=s.trim().split(/\s+/)[0];if(p)addImg(p);});}
 
   // Images from all common attributes
@@ -198,7 +198,7 @@ function extractFromHtml(html,pageUrl){
     var x=abs(base,h);
     if(x&&same(pageUrl,x)){
       var c=x.split('#')[0].replace(/\/$/,'');
-      if(!/\.(jpe?g|png|gif|webp|svg|ico|js|css|woff|ttf|pdf|zip|mp4|mp3)(\?|$)/i.test(c))links.add(c);
+      if(!/\.(jpe?g|png|gif|webp|svg|ico|js|css|woff|ttf|pdf|zip|mp4|mp3|docx?|xlsx?|pptx?|rar|gz|doc)(\?|$)/i.test(c))links.add(c);
     }
   });
 
