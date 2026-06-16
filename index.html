@@ -214,7 +214,7 @@ function addImageToResults(url,pageUrl){
   var card=document.createElement('div');
   card.className='card';
   card.id='card-'+Object.keys(images).length;
-  card.innerHTML='<div class="thumb"><img src="'+su+'" loading="lazy" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'flex\';this.closest(\'.card\').querySelector(\'.badge\').className=\'badge berr\';this.closest(\'.card\').querySelector(\'.badge\').textContent=\'BLOCKED\'"><div style="display:none;width:100%;height:100%;align-items:center;justify-content:center;font-size:28px">🚫</div></div><div class="ameta"><div class="afn">'+fn+'</div><div class="apg">'+pu+'</div></div><span class="badge bok">VISIBLE</span>';
+  card.innerHTML='<a href="'+su+'" target="_blank" rel="noopener" style="display:block;text-decoration:none"><div class="thumb"><img src="'+su+'" loading="lazy" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'flex\';this.closest(\'.card\').querySelector(\'.badge\').className=\'badge berr\';this.closest(\'.card\').querySelector(\'.badge\').textContent=\'BLOCKED\'"><div style="display:none;width:100%;height:100%;align-items:center;justify-content:center;font-size:28px">🚫</div></div><div class="ameta"><div class="afn">'+fn+'</div><div class="apg">'+pu+'</div></div><span class="badge bok">VISIBLE</span>';
   document.getElementById('grid').appendChild(card);
   document.getElementById('sImgs').textContent=Object.keys(images).length;
 }
