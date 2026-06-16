@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Image Crawler</title>
 <style>
-:root{--bg:#0d1117;--sur:#161b22;--bdr:#30363d;--acc:#58a6ff;--adim:#1f3556;--txt:#e6edf3;--mut:#8b949e;--ok:#3fb950;--okbg:#1a3a2a;--err:#f85149;--errbg:#3a1a1a;--r:10px;--f:-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif}
+:root{--bg:#0d1117;--sur:#161b22;--bdr:#30363d;--acc:#58a6ff;--adim:#1f3556;--txt:#e6edf3;--mut:#8b949e;--ok:#3fb950;--okbg:#1a3a2a;--err:#f85149;--errbg:#3a1a1a;--warn:#d29922;--r:10px;--f:-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif}
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--bg);color:var(--txt);font-family:var(--f);font-size:15px;min-height:100vh;padding:20px 16px 40px}
 h1{font-size:22px;font-weight:700;letter-spacing:-.4px;margin-bottom:4px}
@@ -17,8 +17,11 @@ input::placeholder{color:var(--mut)}
 .olbl{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--mut);cursor:pointer}
 .olbl input[type=checkbox]{accent-color:var(--acc);width:16px;height:16px}
 select{background:var(--sur);border:1px solid var(--bdr);border-radius:8px;color:var(--txt);font-family:var(--f);font-size:13px;padding:6px 10px;outline:none;-webkit-appearance:none;cursor:pointer}
-#goBtn{width:100%;background:var(--acc);border:none;border-radius:var(--r);color:#0d1117;font-family:var(--f);font-size:16px;font-weight:700;padding:14px;cursor:pointer;-webkit-tap-highlight-color:transparent;margin-bottom:6px}
+.btnrow{display:flex;gap:10px;margin-bottom:6px}
+#goBtn{flex:1;background:var(--acc);border:none;border-radius:var(--r);color:#0d1117;font-family:var(--f);font-size:16px;font-weight:700;padding:14px;cursor:pointer;-webkit-tap-highlight-color:transparent}
 #goBtn:disabled{opacity:.4;cursor:not-allowed}
+#wpBtn{flex:1;background:var(--sur);border:1px solid var(--acc);border-radius:var(--r);color:var(--acc);font-family:var(--f);font-size:15px;font-weight:700;padding:14px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+#wpBtn:disabled{opacity:.4;cursor:not-allowed}
 .note{font-size:11px;color:var(--mut);line-height:1.5}
 #status{margin-top:12px;font-size:13px;color:var(--mut);min-height:18px;word-break:break-all}
 .pbw{background:var(--sur);border-radius:4px;height:4px;margin-top:8px;overflow:hidden;display:none}
@@ -39,13 +42,14 @@ select{background:var(--sur);border:1px solid var(--bdr);border-radius:8px;color
 .badge{position:absolute;top:6px;right:6px;border-radius:6px;font-size:10px;font-weight:700;padding:2px 6px;text-transform:uppercase}
 .bok{background:var(--okbg);color:var(--ok)}
 .berr{background:var(--errbg);color:var(--err)}
+.bwp{background:#1a2a3a;color:#58a6ff}
 .empty{text-align:center;padding:40px 20px;color:var(--mut);font-size:14px;line-height:1.7}
 .logrow{display:flex;align-items:center;gap:8px;margin-top:8px}
 .logbtn{font-size:12px;color:var(--mut);background:none;border:none;cursor:pointer;text-decoration:underline;font-family:var(--f)}
 .copybtn{font-size:11px;color:var(--acc);background:var(--adim);border:1px solid var(--acc);border-radius:6px;padding:3px 10px;cursor:pointer;font-family:var(--f);display:none}
 .logbox{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--r);font-size:11px;color:var(--mut);padding:10px 12px;margin-top:6px;max-height:220px;overflow-y:auto;font-family:monospace;line-height:1.7;display:none}
 .logbox.on{display:block}
-.lerr{color:var(--err)}.lok{color:var(--ok)}.lwarn{color:var(--warn,#d29922)}
+.lerr{color:var(--err)}.lok{color:var(--ok)}.lwarn{color:var(--warn)}
 </style>
 </head>
 <body>
@@ -61,8 +65,11 @@ select{background:var(--sur);border:1px solid var(--bdr);border-radius:8px;color
   <label class="olbl">Parallel: <select id="concur"><option>3</option><option>5</option><option selected>8</option><option>10</option><option>15</option></select></label>
 </div>
 
-<button id="goBtn" onclick="run()">Start Crawl</button>
-<p class="note">Fetches pages directly. No API key needed.</p>
+<div class="btnrow">
+  <button id="goBtn" onclick="runCrawl()">Crawl pages</button>
+  <button id="wpBtn" onclick="runWP()">WP Media API</button>
+</div>
+<p class="note">WP Media API finds ALL uploaded images, including unused ones.</p>
 
 <div id="status"></div>
 <div class="pbw" id="pbw"><div class="pb" id="pb"></div></div>
@@ -82,53 +89,19 @@ select{background:var(--sur);border:1px solid var(--bdr);border-radius:8px;color
 <div id="results"></div>
 
 <script>
-var images={},going=false,logs=[],visited={},queue=[],activeCount=0,pages=0,fails=0,maxPages=10,concur=3,doSub=true,maxD=2,startUrl='';
+var images={},going=false,logs=[],visited={},queue=[],activeCount=0,pages=0,fails=0,maxPages=20,concur=8,doSub=true,maxD=2;
 
 function isImage(u){return/\.(jpe?g|png|gif|webp|svg|ico|avif|bmp|tiff?)(\?|$)/i.test(u.split('#')[0]);}
 function gname(u){try{var p=new URL(u).pathname;return decodeURIComponent(p.split('/').pop()||p||u);}catch(e){return u;}}
+function directUrl(u){return u.split('?')[0].replace(/-\d+x\d+(\.(?:jpe?g|png|gif|webp|svg|avif))$/i,'$1');}
 function abs(base,h){if(!h||/^(data:|blob:|javascript:)/.test(h))return null;try{return new URL(h,base).href;}catch(e){return null;}}
 function same(base,u){try{return new URL(u).hostname===new URL(base).hostname;}catch(e){return false;}}
 function eh(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
-
-function L(m,c){
-  c=c||'';
-  var t=new Date().toLocaleTimeString('en',{hour12:false,hour:'2-digit',minute:'2-digit',second:'2-digit'});
-  var line='['+t+'] '+m;
-  logs.push({line:line,c:c});
-  var b=document.getElementById('logbox');
-  b.innerHTML=logs.map(function(l){return'<span class="l'+l.c+'">'+eh(l.line)+'</span>';}).join('<br>');
-  b.scrollTop=b.scrollHeight;
-}
-
+function L(m,c){c=c||'';var t=new Date().toLocaleTimeString('en',{hour12:false,hour:'2-digit',minute:'2-digit',second:'2-digit'});var line='['+t+'] '+m;logs.push({line:line,c:c});var b=document.getElementById('logbox');b.innerHTML=logs.map(function(l){return'<span class="l'+l.c+'">'+eh(l.line)+'</span>';}).join('<br>');b.scrollTop=b.scrollHeight;}
 function st(m){document.getElementById('status').textContent=m;}
 function pr(v){document.getElementById('pbw').style.display='block';document.getElementById('pb').style.width=Math.min(100,v)+'%';}
-
-function toggleLog(){
-  var b=document.getElementById('logbox');
-  b.classList.toggle('on');
-  document.getElementById('logbtn').textContent=b.classList.contains('on')?'Hide log':'Show log';
-}
-
-function copyLog(){
-  var text=logs.map(function(l){return l.line;}).join('\n');
-  if(navigator.clipboard&&navigator.clipboard.writeText){
-    navigator.clipboard.writeText(text).then(function(){
-      var btn=document.getElementById('copybtn');
-      btn.textContent='Copied!';
-      setTimeout(function(){btn.textContent='Copy log';},2000);
-    });
-  } else {
-    var ta=document.createElement('textarea');
-    ta.value=text;
-    ta.style.position='fixed';ta.style.opacity='0';
-    document.body.appendChild(ta);ta.select();
-    document.execCommand('copy');
-    document.body.removeChild(ta);
-    var btn=document.getElementById('copybtn');
-    btn.textContent='Copied!';
-    setTimeout(function(){btn.textContent='Copy log';},2000);
-  }
-}
+function toggleLog(){var b=document.getElementById('logbox');b.classList.toggle('on');document.getElementById('logbtn').textContent=b.classList.contains('on')?'Hide log':'Show log';}
+function copyLog(){var text=logs.map(function(l){return l.line;}).join('\n');if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(text).then(function(){var btn=document.getElementById('copybtn');btn.textContent='Copied!';setTimeout(function(){btn.textContent='Copy log';},2000);});}else{var ta=document.createElement('textarea');ta.value=text;ta.style.cssText='position:fixed;opacity:0';document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);var btn=document.getElementById('copybtn');btn.textContent='Copied!';setTimeout(function(){btn.textContent='Copy log';},2000);}}
 
 var PROXIES=[
   function(u){return'https://api.allorigins.win/raw?url='+encodeURIComponent(u);},
@@ -136,99 +109,139 @@ var PROXIES=[
   function(u){return'https://corsproxy.io/?url='+encodeURIComponent(u);}
 ];
 
-async function fetchPage(targetUrl){
+async function fetchUrl(targetUrl){
   var lastErr='';
   for(var i=0;i<PROXIES.length;i++){
     try{
-      var resp=await fetch(PROXIES[i](targetUrl),{headers:{'Accept':'text/html,*/*'}});
+      var resp=await fetch(PROXIES[i](targetUrl),{headers:{'Accept':'*/*'}});
       if(!resp.ok){lastErr='HTTP '+resp.status;continue;}
       var text=await resp.text();
       if(text.trim().startsWith('{')){try{var j=JSON.parse(text);if(j.contents)text=j.contents;}catch(e){}}
-      if(text.length<100){lastErr='Empty';continue;}
+      if(text.length<50){lastErr='Empty';continue;}
       return text;
     }catch(e){lastErr=e.message;}
   }
   throw new Error(lastErr||'All proxies failed');
 }
 
+function initUI(){
+  images={};logs=[];visited={};queue=[];activeCount=0;pages=0;fails=0;
+  document.getElementById('goBtn').disabled=true;
+  document.getElementById('wpBtn').disabled=true;
+  document.getElementById('statsRow').style.display='none';
+  document.getElementById('sFailChip').style.display='none';
+  document.getElementById('results').innerHTML='<div class="sech" id="imgHeader">IMAGES</div><div class="grid" id="grid"></div>';
+  document.getElementById('pbw').style.display='none';
+  document.getElementById('logbox').innerHTML='';
+  document.getElementById('logbox').classList.remove('on');
+  document.getElementById('logbtn').style.display='inline';
+  document.getElementById('copybtn').style.display='inline';
+  document.getElementById('logbtn').textContent='Show log';
+}
+
+function addImage(url, sourceLabel, badge){
+  badge=badge||'bok';
+  var clean=directUrl(url);
+  if(images[clean])return;
+  images[clean]={source:sourceLabel};
+  var fn=eh(gname(clean));
+  var sl=eh(sourceLabel);
+  var su=clean.replace(/"/g,'%22');
+  var card=document.createElement('div');
+  card.className='card';
+  card.innerHTML='<a href="'+su+'" target="_blank" rel="noopener" style="display:block;text-decoration:none"><div class="thumb"><img src="'+su+'" loading="lazy" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'flex\';this.closest(\'.card\').querySelector(\'.badge\').className=\'badge berr\';this.closest(\'.card\').querySelector(\'.badge\').textContent=\'BLOCKED\'"><div style="display:none;width:100%;height:100%;align-items:center;justify-content:center;font-size:28px">🚫</div></div></a><div class="ameta"><div class="afn">'+fn+'</div><div class="apg">'+sl+'</div></div><span class="badge '+badge+'">VISIBLE</span>';
+  document.getElementById('grid').appendChild(card);
+  document.getElementById('sImgs').textContent=Object.keys(images).length;
+}
+
+function updateStats(){
+  document.getElementById('sPages').textContent=pages;
+  document.getElementById('sImgs').textContent=Object.keys(images).length;
+  if(fails>0){document.getElementById('sFails').textContent=fails;document.getElementById('sFailChip').style.display='flex';}
+  document.getElementById('statsRow').style.display='flex';
+}
+
+// === WP REST API MODE ===
+async function runWP(){
+  if(going)return;
+  var raw=document.getElementById('urlInput').value.trim();
+  if(!raw){st('Enter a URL first.');return;}
+  var base;try{base=new URL(raw).origin;}catch(e){st('Invalid URL.');return;}
+  going=true;
+  initUI();
+  st('Fetching WordPress media library...');
+  pr(10);
+  document.getElementById('logbtn').style.display='inline';
+
+  var page=1,total=0,found=0;
+  try{
+    while(true){
+      var apiUrl=base+'/wp-json/wp/v2/media?per_page=100&page='+page+'&media_type=image';
+      L('Fetching WP API page '+page+': '+apiUrl);
+      var text=await fetchUrl(apiUrl);
+      var items;
+      try{items=JSON.parse(text);}catch(e){throw new Error('JSON parse failed');}
+      if(!Array.isArray(items)||items.length===0){L('No more items on page '+page);break;}
+      L('Got '+items.length+' items on page '+page,'ok');
+      for(var i=0;i<items.length;i++){
+        var item=items[i];
+        var src=item.source_url||'';
+        if(src){addImage(src,'WP Media Library','bwp');found++;}
+        // Also grab all sizes
+        var sizes=item.media_details&&item.media_details.sizes?item.media_details.sizes:{};
+        for(var sz in sizes){
+          if(sizes[sz]&&sizes[sz].source_url){
+            var su=sizes[sz].source_url;
+            var clean=directUrl(su);
+            if(!images[clean]){addImage(su,'WP Media ('+sz+')','bwp');}
+          }
+        }
+      }
+      total+=items.length;
+      pr(Math.min(90,10+(page*10)));
+      page++;
+      if(items.length<100)break;
+      await new Promise(function(r){setTimeout(r,200);});
+    }
+    pr(100);
+    st('Done. Found '+Object.keys(images).length+' images in WP Media Library ('+total+' media items).');
+    L('Complete. '+Object.keys(images).length+' unique images','ok');
+  }catch(e){
+    L('Error: '+e.message,'err');
+    st('Error: '+e.message);
+  }
+  updateStats();
+  document.getElementById('goBtn').disabled=false;
+  document.getElementById('wpBtn').disabled=false;
+  going=false;
+}
+
+// === PAGE CRAWLER MODE ===
 function extractFromHtml(html,pageUrl){
   var imgs=new Set(),links=new Set();
   var doc;try{doc=new DOMParser().parseFromString(html,'text/html');}catch(e){return{imgs:[],links:[]};}
   var bel=doc.querySelector('base[href]');
   var base=bel?(abs(pageUrl,bel.getAttribute('href'))||pageUrl):pageUrl;
-
-  function addImg(h){if(!h)return;if(h.startsWith('data:'))return;var x=abs(base,h);if(!x)return;if(x.startsWith('data:'))return;if(x.includes('base64'))return;var fn=x.split('?')[0].split('/').pop().toLowerCase();if(fn.length<3)return;imgs.add(x);}
+  function addImg(h){if(!h)return;if(h.startsWith('data:'))return;var x=abs(base,h);if(!x||x.startsWith('data:')||x.includes('base64'))return;var fn=x.split('?')[0].split('/').pop().toLowerCase();if(fn.length<3)return;imgs.add(x);}
   function addSS(v){if(!v)return;v.split(',').forEach(function(s){var p=s.trim().split(/\s+/)[0];if(p)addImg(p);});}
-
-  // Images from all common attributes
-  doc.querySelectorAll('img').forEach(function(el){
-    ['src','data-src','data-lazy-src','data-original','data-img','data-image','data-bg','data-lazy','data-delayed-src','data-echo'].forEach(function(a){addImg(el.getAttribute(a));});
-    ['srcset','data-srcset','data-lazy-srcset'].forEach(function(a){addSS(el.getAttribute(a));});
-  });
+  doc.querySelectorAll('img').forEach(function(el){['src','data-src','data-lazy-src','data-original','data-img','data-image','data-bg','data-lazy','data-delayed-src','data-echo'].forEach(function(a){addImg(el.getAttribute(a));});['srcset','data-srcset','data-lazy-srcset'].forEach(function(a){addSS(el.getAttribute(a));});});
   doc.querySelectorAll('picture source').forEach(function(el){addSS(el.getAttribute('srcset'));addImg(el.getAttribute('src'));});
-
-  // CSS background images
-  doc.querySelectorAll('[style]').forEach(function(el){
-    var m,re=/url\(\s*['"]?([^'")\s]+)['"]?\s*\)/gi,s=el.getAttribute('style')||'';
-    while((m=re.exec(s))!==null){if(isImage(m[1]))addImg(m[1]);}
-  });
-  doc.querySelectorAll('style').forEach(function(el){
-    var m,re=/url\(\s*['"]?([^'")\s]+)['"]?\s*\)/gi,css=el.textContent||'';
-    while((m=re.exec(css))!==null){if(!m[1].startsWith('data:')&&isImage(m[1]))addImg(m[1]);}
-  });
-
-  // OG / Twitter meta images
+  doc.querySelectorAll('[style]').forEach(function(el){var m,re=/url\(\s*['"]?([^'")\s]+)['"]?\s*\)/gi,s=el.getAttribute('style')||'';while((m=re.exec(s))!==null){if(isImage(m[1]))addImg(m[1]);}});
+  doc.querySelectorAll('style').forEach(function(el){var m,re=/url\(\s*['"]?([^'")\s]+)['"]?\s*\)/gi,css=el.textContent||'';while((m=re.exec(css))!==null){if(!m[1].startsWith('data:')&&isImage(m[1]))addImg(m[1]);}});
   doc.querySelectorAll('meta[property="og:image"],meta[name="twitter:image"],meta[property="og:image:url"]').forEach(function(el){addImg(el.getAttribute('content'));});
-
-  // Favicon
   doc.querySelectorAll('link[rel~="icon"][href],link[rel~="apple-touch-icon"][href]').forEach(function(el){addImg(el.getAttribute('href'));});
-
-  // Data background attributes
-  doc.querySelectorAll('[data-background],[data-bg-src],[data-background-image]').forEach(function(el){
-    ['data-background','data-bg-src','data-background-image'].forEach(function(a){var v=el.getAttribute(a);if(v&&!v.startsWith('{'))addImg(v);});
-  });
-
-  // Video poster
+  doc.querySelectorAll('[data-background],[data-bg-src],[data-background-image]').forEach(function(el){['data-background','data-bg-src','data-background-image'].forEach(function(a){var v=el.getAttribute(a);if(v&&!v.startsWith('{'))addImg(v);});});
   doc.querySelectorAll('video[poster]').forEach(function(el){addImg(el.getAttribute('poster'));});
-
-  // Internal page links for subpage crawling
   doc.querySelectorAll('a[href]').forEach(function(el){
-    var h=el.getAttribute('href');
-    if(!h||/^(#|mailto:|tel:|javascript:|ftp:)/.test(h))return;
+    var h=el.getAttribute('href');if(!h||/^(#|mailto:|tel:|javascript:|ftp:)/.test(h))return;
     var x=abs(base,h);
-    if(x&&same(pageUrl,x)){
-      var c=x.split('#')[0].replace(/\/$/,'');
-      if(!/\.(jpe?g|png|gif|webp|svg|ico|js|css|woff|ttf|pdf|zip|mp4|mp3|docx?|xlsx?|pptx?|rar|gz|doc)(\?|$)/i.test(c)&&!/\/export-events\//i.test(c)&&!/[?&]key=/.test(c))links.add(c);
-    }
+    if(x&&same(pageUrl,x)){var c=x.split('#')[0].replace(/\/$/,'');if(!/\.(jpe?g|png|gif|webp|svg|ico|js|css|woff|ttf|pdf|zip|mp4|mp3|docx?|xlsx?|pptx?|rar|gz|doc)(\?|$)/i.test(c)&&!/\/export-events\//i.test(c)&&!/[?&]key=/.test(c))links.add(c);}
   });
-
   return{imgs:Array.from(imgs),links:Array.from(links)};
 }
 
-
-function directUrl(u){
-  // Strip WordPress image size suffixes like -300x200 to get full size original
-  var clean=u.split('?')[0].replace(/-\d+x\d+(\.(?:jpe?g|png|gif|webp|svg|avif))$/i,'$1');
-  return clean;
-}
-function addImageToResults(url,pageUrl){
-  if(images[url])return;
-  images[url]={page:pageUrl,broken:false};
-  var fn=eh(gname(url));
-  var pu=eh(pageUrl);
-  var su=url.replace(/"/g,'%22');
-  var card=document.createElement('div');
-  card.className='card';
-  card.id='card-'+Object.keys(images).length;
-  card.innerHTML='<a href="'+directUrl(su)+'" target="_blank" rel="noopener" style="display:block;text-decoration:none"><div class="thumb"><img src="'+su+'" loading="lazy" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'flex\';this.closest(\'.card\').querySelector(\'.badge\').className=\'badge berr\';this.closest(\'.card\').querySelector(\'.badge\').textContent=\'BLOCKED\'"><div style="display:none;width:100%;height:100%;align-items:center;justify-content:center;font-size:28px">🚫</div></div><div class="ameta"><div class="afn">'+fn+'</div><div class="apg">'+pu+'</div></div><span class="badge bok">VISIBLE</span>';
-  document.getElementById('grid').appendChild(card);
-  document.getElementById('sImgs').textContent=Object.keys(images).length;
-}
-
-function updateStatus(){
-  var total=Object.keys(visited).length;
-  var inQ=queue.length;
-  st('Crawled '+pages+'/'+maxPages+' pages, '+Object.keys(images).length+' images found. Active: '+activeCount+', Queue: '+inQ);
+function updateCrawlStatus(){
+  st('Crawled '+pages+'/'+maxPages+' pages, '+Object.keys(images).length+' images. Active: '+activeCount+', Queue: '+queue.length);
   pr((pages/maxPages)*90);
 }
 
@@ -240,83 +253,48 @@ function processQueue(){
     activeCount++;
     crawlPage(item);
   }
-  if(activeCount===0&&queue.length===0){
-    finish();
-  }
+  if(activeCount===0&&queue.length===0){finishCrawl();}
 }
 
 async function crawlPage(item){
   L('Crawling: '+item.url);
-  updateStatus();
+  updateCrawlStatus();
   try{
-    var html=await fetchPage(item.url);
+    var html=await fetchUrl(item.url);
     pages++;
     var r=extractFromHtml(html,item.url);
     L('  '+r.imgs.length+' images, '+r.links.length+' links on '+item.url,'ok');
-
-    // Add images to results immediately (streaming)
-    for(var i=0;i<r.imgs.length;i++){
-      addImageToResults(r.imgs[i],item.url);
-    }
-
-    // Queue subpages
-    if(doSub&&item.d<maxD){
-      for(var j=0;j<r.links.length;j++){
-        var lk=r.links[j];
-        if(!visited[lk]&&pages+activeCount+queue.length<maxPages*2){
-          queue.push({url:lk,d:item.d+1});
-        }
-      }
-    }
+    for(var i=0;i<r.imgs.length;i++){addImage(r.imgs[i],item.url,'bok');}
+    if(doSub&&item.d<maxD){for(var j=0;j<r.links.length;j++){var lk=r.links[j];if(!visited[lk]&&pages+activeCount+queue.length<maxPages*3)queue.push({url:lk,d:item.d+1});}}
   }catch(e){
-    fails++;
-    L('FAILED: '+item.url+' => '+e.message,'err');
+    fails++;L('FAILED: '+item.url+' => '+e.message,'err');
     if(fails>0){document.getElementById('sFails').textContent=fails;document.getElementById('sFailChip').style.display='flex';}
   }
   activeCount--;
-  updateStatus();
+  updateCrawlStatus();
   processQueue();
 }
 
-function finish(){
-  pr(100);
-  var imgCount=Object.keys(images).length;
-  document.getElementById('sPages').textContent=pages;
-  document.getElementById('sImgs').textContent=imgCount;
-  document.getElementById('statsRow').style.display='flex';
-  if(imgCount===0){
-    document.getElementById('results').innerHTML='<div class="empty">No images found. Check the log for details.</div>';
-  }
-  st('Done. '+pages+' pages crawled, '+imgCount+' images found'+(fails>0?', '+fails+' failed':'')+'.');
+function finishCrawl(){
+  pr(100);updateStats();
+  st('Done. '+pages+' pages crawled, '+Object.keys(images).length+' images found'+(fails>0?', '+fails+' failed':'')+'.');
   document.getElementById('goBtn').disabled=false;
+  document.getElementById('wpBtn').disabled=false;
   going=false;
 }
 
-function run(){
+function runCrawl(){
   if(going)return;
   var raw=document.getElementById('urlInput').value.trim();
   if(!raw){st('Enter a URL first.');return;}
-  try{startUrl=new URL(raw).href;}catch(e){st('Invalid URL.');return;}
-
+  var start;try{start=new URL(raw).href;}catch(e){st('Invalid URL.');return;}
   doSub=document.getElementById('doSub').checked;
   maxD=parseInt(document.getElementById('maxD').value);
   maxPages=parseInt(document.getElementById('maxP').value);
   concur=parseInt(document.getElementById('concur').value);
-
-  going=true;images={};logs=[];visited={};queue=[];activeCount=0;pages=0;fails=0;
-  document.getElementById('goBtn').disabled=true;
-  document.getElementById('statsRow').style.display='none';
-  document.getElementById('sFailChip').style.display='none';
-  document.getElementById('results').innerHTML='<div class="sech">IMAGES</div><div class="grid" id="grid"></div>';
-  document.getElementById('pbw').style.display='none';
-  document.getElementById('logbox').innerHTML='';
-  document.getElementById('logbox').classList.remove('on');
-  document.getElementById('logbtn').style.display='inline';
-  document.getElementById('copybtn').style.display='inline';
-  document.getElementById('logbtn').textContent='Show log';
-  st('Starting...');
-
-  queue.push({url:startUrl,d:0});
+  going=true;
+  initUI();
+  queue.push({url:start,d:0});
   processQueue();
 }
 </script>
