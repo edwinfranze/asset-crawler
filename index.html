@@ -3,14 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Asset Visibility Crawler</title>
+<title>Image Crawler</title>
 <style>
-:root{--bg:#0d1117;--sur:#161b22;--bdr:#30363d;--acc:#58a6ff;--adim:#1f3556;--txt:#e6edf3;--mut:#8b949e;--ok:#3fb950;--okbg:#1a3a2a;--err:#f85149;--errbg:#3a1a1a;--warn:#d29922;--r:10px;--f:-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif}
+:root{--bg:#0d1117;--sur:#161b22;--bdr:#30363d;--acc:#58a6ff;--adim:#1f3556;--txt:#e6edf3;--mut:#8b949e;--ok:#3fb950;--okbg:#1a3a2a;--err:#f85149;--errbg:#3a1a1a;--r:10px;--f:-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif}
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--bg);color:var(--txt);font-family:var(--f);font-size:15px;min-height:100vh;padding:20px 16px 40px}
 h1{font-size:22px;font-weight:700;letter-spacing:-.4px;margin-bottom:4px}
 .sub{font-size:13px;color:var(--mut);line-height:1.5;margin-bottom:20px}
-.lbl{font-size:12px;color:var(--mut);margin-bottom:5px}
 input[type=url]{width:100%;background:var(--sur);border:1px solid var(--bdr);border-radius:var(--r);color:var(--txt);font-family:var(--f);font-size:15px;padding:12px 14px;outline:none;-webkit-appearance:none;margin-bottom:10px}
 input:focus{border-color:var(--acc)}
 input::placeholder{color:var(--mut)}
@@ -23,24 +22,17 @@ select{background:var(--sur);border:1px solid var(--bdr);border-radius:8px;color
 .note{font-size:11px;color:var(--mut);line-height:1.5}
 #status{margin-top:12px;font-size:13px;color:var(--mut);min-height:18px;word-break:break-all}
 .pbw{background:var(--sur);border-radius:4px;height:4px;margin-top:8px;overflow:hidden;display:none}
-.pb{background:var(--acc);height:100%;width:0%;transition:width .3s}
+.pb{background:var(--acc);height:100%;width:0%;transition:width .2s}
 .stats{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}
 .chip{background:var(--sur);border:1px solid var(--bdr);border-radius:8px;padding:8px 12px;font-size:12px;color:var(--mut);display:flex;flex-direction:column;gap:2px}
 .chip b{font-size:18px;font-weight:700;color:var(--txt)}
 .chip.fail b{color:var(--err)}
-.ftrs{display:flex;gap:8px;margin-top:20px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch}
-.fb{background:var(--sur);border:1px solid var(--bdr);border-radius:20px;color:var(--mut);font-family:var(--f);font-size:13px;padding:6px 14px;cursor:pointer;white-space:nowrap;flex-shrink:0}
-.fb.on{background:var(--adim);border-color:var(--acc);color:var(--acc)}
 #results{margin-top:16px}
-.sec{margin-bottom:24px}
 .sech{font-size:12px;font-weight:600;color:var(--mut);letter-spacing:.5px;text-transform:uppercase;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--bdr)}
 .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
 .card{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--r);overflow:hidden;position:relative}
 .thumb{width:100%;aspect-ratio:16/10;overflow:hidden;background:#0d1117;display:flex;align-items:center;justify-content:center}
 .thumb img{width:100%;height:100%;object-fit:cover}
-.othumb{padding:14px 12px 8px;display:flex;align-items:center;gap:8px}
-.aico{font-size:24px;flex-shrink:0}
-.aext{font-size:11px;font-weight:700;color:var(--acc);text-transform:uppercase;letter-spacing:.5px}
 .ameta{padding:8px 10px 10px}
 .afn{font-size:11px;color:var(--txt);word-break:break-all;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .apg{font-size:10px;color:var(--mut);margin-top:3px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
@@ -48,68 +40,96 @@ select{background:var(--sur);border:1px solid var(--bdr);border-radius:8px;color
 .bok{background:var(--okbg);color:var(--ok)}
 .berr{background:var(--errbg);color:var(--err)}
 .empty{text-align:center;padding:40px 20px;color:var(--mut);font-size:14px;line-height:1.7}
-.logbtn{font-size:12px;color:var(--mut);background:none;border:none;cursor:pointer;margin-top:8px;text-decoration:underline;font-family:var(--f);display:none}
-.logbox{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--r);font-size:11px;color:var(--mut);padding:10px 12px;margin-top:8px;max-height:220px;overflow-y:auto;font-family:monospace;line-height:1.7;display:none}
+.logrow{display:flex;align-items:center;gap:8px;margin-top:8px}
+.logbtn{font-size:12px;color:var(--mut);background:none;border:none;cursor:pointer;text-decoration:underline;font-family:var(--f)}
+.copybtn{font-size:11px;color:var(--acc);background:var(--adim);border:1px solid var(--acc);border-radius:6px;padding:3px 10px;cursor:pointer;font-family:var(--f);display:none}
+.logbox{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--r);font-size:11px;color:var(--mut);padding:10px 12px;margin-top:6px;max-height:220px;overflow-y:auto;font-family:monospace;line-height:1.7;display:none}
 .logbox.on{display:block}
-.lerr{color:var(--err)}.lok{color:var(--ok)}.lwarn{color:var(--warn)}
+.lerr{color:var(--err)}.lok{color:var(--ok)}.lwarn{color:var(--warn,#d29922)}
 </style>
 </head>
 <body>
-<h1>Asset Visibility Crawler</h1>
-<p class="sub">Crawls a website and shows all publicly visible assets.</p>
+<h1>Image Crawler</h1>
+<p class="sub">Crawls a website and shows all publicly visible images.</p>
 
 <input type="url" id="urlInput" value="https://paulus.unicoz.nl/" placeholder="https://example.com" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false">
 
 <div class="opts">
   <label class="olbl"><input type="checkbox" id="doSub" checked> Subpages</label>
   <label class="olbl">Depth: <select id="maxD"><option>1</option><option selected>2</option><option>3</option></select></label>
-  <label class="olbl">Max pages: <select id="maxP"><option>3</option><option selected>5</option><option>10</option><option>20</option></select></label>
+  <label class="olbl">Max pages: <select id="maxP"><option>5</option><option selected>10</option><option>20</option><option>50</option></select></label>
+  <label class="olbl">Parallel: <select id="concur"><option>2</option><option selected>3</option><option>5</option></select></label>
 </div>
 
 <button id="goBtn" onclick="run()">Start Crawl</button>
-<p class="note">No API key needed. Fetches pages directly via browser.</p>
+<p class="note">Fetches pages directly. No API key needed.</p>
 
 <div id="status"></div>
 <div class="pbw" id="pbw"><div class="pb" id="pb"></div></div>
-<button class="logbtn" id="logbtn" onclick="toggleLog()">Show debug log</button>
+
+<div class="logrow">
+  <button class="logbtn" id="logbtn" onclick="toggleLog()" style="display:none">Show log</button>
+  <button class="copybtn" id="copybtn" onclick="copyLog()">Copy log</button>
+</div>
 <div class="logbox" id="logbox"></div>
 
 <div class="stats" id="statsRow" style="display:none">
   <div class="chip"><b id="sPages">0</b>Pages</div>
-  <div class="chip"><b id="sAssets">0</b>Assets</div>
   <div class="chip"><b id="sImgs">0</b>Images</div>
-  <div class="chip"><b id="sOther">0</b>Other</div>
   <div class="chip fail" id="sFailChip" style="display:none"><b id="sFails">0</b>Failed</div>
 </div>
-<div class="ftrs" id="ftrs" style="display:none">
-  <button class="fb on" onclick="filt('all',this)">All</button>
-  <button class="fb" onclick="filt('image',this)">Images</button>
-  <button class="fb" onclick="filt('script',this)">Scripts</button>
-  <button class="fb" onclick="filt('style',this)">Styles</button>
-  <button class="fb" onclick="filt('font',this)">Fonts</button>
-  <button class="fb" onclick="filt('media',this)">Media</button>
-  <button class="fb" onclick="filt('other',this)">Other</button>
-</div>
+
 <div id="results"></div>
 
 <script>
-var ICONS={image:'🖼',style:'🎨',script:'⚙️',font:'🔤',media:'🎬',document:'📄',other:'📦'};
-var LABELS={image:'Images',style:'Stylesheets',script:'Scripts',font:'Fonts',media:'Media',document:'Documents',other:'Other'};
-var ORDER=['image','style','script','font','media','document','other'];
-var assets=[],curFilt='all',going=false,logs=[];
+var images={},going=false,logs=[],visited={},queue=[],activeCount=0,pages=0,fails=0,maxPages=10,concur=3,doSub=true,maxD=2,startUrl='';
 
-function gtype(u){var x=u.toLowerCase().split('?')[0].split('#')[0];if(/\.(jpe?g|png|gif|webp|svg|ico|avif|bmp|tiff?)(\b|$)/.test(x))return'image';if(/\.(mjs|jsx?)(\b|$)/.test(x))return'script';if(/\.css(\b|$)/.test(x))return'style';if(/\.(woff2?|ttf|otf|eot)(\b|$)/.test(x))return'font';if(/\.(mp4|webm|ogg|mp3|wav|avi|mov|flac|aac|m4v|m4a)(\b|$)/.test(x))return'media';if(/\.(pdf|docx?|xlsx?|pptx?|zip|rar|gz)(\b|$)/.test(x))return'document';return'other';}
-function gext(u){var m=u.split('?')[0].match(/\.([a-z0-9]{1,6})$/i);return m?m[1].toUpperCase():'?';}
+function isImage(u){return/\.(jpe?g|png|gif|webp|svg|ico|avif|bmp|tiff?)(\?|$)/i.test(u.split('#')[0]);}
 function gname(u){try{var p=new URL(u).pathname;return decodeURIComponent(p.split('/').pop()||p||u);}catch(e){return u;}}
 function abs(base,h){if(!h||/^(data:|blob:|javascript:)/.test(h))return null;try{return new URL(h,base).href;}catch(e){return null;}}
 function same(base,u){try{return new URL(u).hostname===new URL(base).hostname;}catch(e){return false;}}
 function eh(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
-function L(m,c){c=c||'';var t=new Date().toLocaleTimeString('en',{hour12:false,hour:'2-digit',minute:'2-digit',second:'2-digit'});logs.push('<span class="l'+c+'">['+t+'] '+eh(m)+'</span>');var b=document.getElementById('logbox');b.innerHTML=logs.join('<br>');b.scrollTop=b.scrollHeight;}
+
+function L(m,c){
+  c=c||'';
+  var t=new Date().toLocaleTimeString('en',{hour12:false,hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  var line='['+t+'] '+m;
+  logs.push({line:line,c:c});
+  var b=document.getElementById('logbox');
+  b.innerHTML=logs.map(function(l){return'<span class="l'+l.c+'">'+eh(l.line)+'</span>';}).join('<br>');
+  b.scrollTop=b.scrollHeight;
+}
+
 function st(m){document.getElementById('status').textContent=m;}
 function pr(v){document.getElementById('pbw').style.display='block';document.getElementById('pb').style.width=Math.min(100,v)+'%';}
-function toggleLog(){var b=document.getElementById('logbox');b.classList.toggle('on');document.getElementById('logbtn').textContent=b.classList.contains('on')?'Hide debug log':'Show debug log';}
 
-// Proxy list - try each until one works
+function toggleLog(){
+  var b=document.getElementById('logbox');
+  b.classList.toggle('on');
+  document.getElementById('logbtn').textContent=b.classList.contains('on')?'Hide log':'Show log';
+}
+
+function copyLog(){
+  var text=logs.map(function(l){return l.line;}).join('\n');
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(function(){
+      var btn=document.getElementById('copybtn');
+      btn.textContent='Copied!';
+      setTimeout(function(){btn.textContent='Copy log';},2000);
+    });
+  } else {
+    var ta=document.createElement('textarea');
+    ta.value=text;
+    ta.style.position='fixed';ta.style.opacity='0';
+    document.body.appendChild(ta);ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    var btn=document.getElementById('copybtn');
+    btn.textContent='Copied!';
+    setTimeout(function(){btn.textContent='Copy log';},2000);
+  }
+}
+
 var PROXIES=[
   function(u){return'https://api.allorigins.win/raw?url='+encodeURIComponent(u);},
   function(u){return'https://api.allorigins.win/get?url='+encodeURIComponent(u);},
@@ -117,128 +137,181 @@ var PROXIES=[
 ];
 
 async function fetchPage(targetUrl){
-  L('Fetching: '+targetUrl);
   var lastErr='';
   for(var i=0;i<PROXIES.length;i++){
-    var proxyUrl=PROXIES[i](targetUrl);
     try{
-      var resp=await fetch(proxyUrl,{headers:{'Accept':'text/html,*/*'}});
-      L('Proxy '+i+' HTTP '+resp.status);
+      var resp=await fetch(PROXIES[i](targetUrl),{headers:{'Accept':'text/html,*/*'}});
       if(!resp.ok){lastErr='HTTP '+resp.status;continue;}
       var text=await resp.text();
-      // allorigins /get returns JSON wrapper
-      if(text.trim().startsWith('{')){
-        try{var j=JSON.parse(text);if(j.contents)text=j.contents;}catch(e){}
-      }
-      if(text.length<100){lastErr='Empty response';continue;}
-      L('Got '+text.length+'c','ok');
+      if(text.trim().startsWith('{')){try{var j=JSON.parse(text);if(j.contents)text=j.contents;}catch(e){}}
+      if(text.length<100){lastErr='Empty';continue;}
       return text;
-    }catch(e){lastErr=e.message;L('Proxy '+i+' failed: '+e.message,'lwarn');}
+    }catch(e){lastErr=e.message;}
   }
-  throw new Error('All proxies failed: '+lastErr);
+  throw new Error(lastErr||'All proxies failed');
 }
 
-function extractAssets(html,pageUrl){
-  var found={},links={};
-  var doc;
-  try{doc=new DOMParser().parseFromString(html,'text/html');}catch(e){return{assets:[],links:[]};}
+function extractFromHtml(html,pageUrl){
+  var imgs=new Set(),links=new Set();
+  var doc;try{doc=new DOMParser().parseFromString(html,'text/html');}catch(e){return{imgs:[],links:[]};}
   var bel=doc.querySelector('base[href]');
   var base=bel?(abs(pageUrl,bel.getAttribute('href'))||pageUrl):pageUrl;
-  function add(h){if(!h)return;var x=abs(base,h);if(x&&!x.startsWith('data:'))found[x]=true;}
-  function addss(v){if(!v)return;v.split(',').forEach(function(s){var p=s.trim().split(/\s+/)[0];if(p)add(p);});}
-  doc.querySelectorAll('img').forEach(function(el){['src','data-src','data-lazy-src','data-original','data-img','data-image','data-bg','data-lazy'].forEach(function(a){var v=el.getAttribute(a);if(v)add(v);});['srcset','data-srcset'].forEach(function(a){var v=el.getAttribute(a);if(v)addss(v);});});
-  doc.querySelectorAll('picture source').forEach(function(el){var v=el.getAttribute('srcset');if(v)addss(v);var s=el.getAttribute('src');if(s)add(s);});
-  doc.querySelectorAll('[style]').forEach(function(el){var m,re=/url\(\s*['"]?([^'")\s]+)['"]?\s*\)/gi,s=el.getAttribute('style')||'';while((m=re.exec(s))!==null)add(m[1]);});
-  doc.querySelectorAll('style').forEach(function(el){var m,re=/url\(\s*['"]?([^'")\s]+)['"]?\s*\)/gi,css=el.textContent||'';while((m=re.exec(css))!==null){if(!m[1].startsWith('data:'))add(m[1]);}});
-  doc.querySelectorAll('script[src]').forEach(function(el){add(el.getAttribute('src'));});
-  doc.querySelectorAll('link[rel="stylesheet"][href],link[as="style"][href]').forEach(function(el){add(el.getAttribute('href'));});
-  doc.querySelectorAll('link[as="font"][href],link[rel="preload"][href],link[rel~="icon"][href],link[rel~="apple-touch-icon"][href]').forEach(function(el){add(el.getAttribute('href'));});
-  doc.querySelectorAll('video[src],audio[src],source[src],video[poster]').forEach(function(el){add(el.getAttribute('src'));add(el.getAttribute('poster'));});
-  doc.querySelectorAll('meta[property="og:image"],meta[name="twitter:image"],meta[property="og:image:url"]').forEach(function(el){var v=el.getAttribute('content');if(v)add(v);});
-  doc.querySelectorAll('[data-background],[data-bg-src],[data-background-image]').forEach(function(el){['data-background','data-bg-src','data-background-image'].forEach(function(a){var v=el.getAttribute(a);if(v&&!v.startsWith('{'))add(v);});});
-  doc.querySelectorAll('a[href]').forEach(function(el){var h=el.getAttribute('href');if(!h||/^(#|mailto:|tel:|javascript:|ftp:)/.test(h))return;var x=abs(base,h);if(x&&same(pageUrl,x)){var c=x.split('#')[0].replace(/\/$/,'');if(!/\.(jpe?g|png|gif|webp|svg|ico|js|css|woff|ttf|pdf|zip|mp4|mp3)(\?|$)/i.test(c))links[c]=true;}});
-  var fa=Object.keys(found),fl=Object.keys(links);
-  L('  '+fa.length+' assets, '+fl.length+' links'+(fa.length>0?'':''),'ok');
-  return{assets:fa,links:fl};
+
+  function addImg(h){if(!h)return;var x=abs(base,h);if(x&&!x.startsWith('data:'))imgs.add(x);}
+  function addSS(v){if(!v)return;v.split(',').forEach(function(s){var p=s.trim().split(/\s+/)[0];if(p)addImg(p);});}
+
+  // Images from all common attributes
+  doc.querySelectorAll('img').forEach(function(el){
+    ['src','data-src','data-lazy-src','data-original','data-img','data-image','data-bg','data-lazy','data-delayed-src','data-echo'].forEach(function(a){addImg(el.getAttribute(a));});
+    ['srcset','data-srcset','data-lazy-srcset'].forEach(function(a){addSS(el.getAttribute(a));});
+  });
+  doc.querySelectorAll('picture source').forEach(function(el){addSS(el.getAttribute('srcset'));addImg(el.getAttribute('src'));});
+
+  // CSS background images
+  doc.querySelectorAll('[style]').forEach(function(el){
+    var m,re=/url\(\s*['"]?([^'")\s]+)['"]?\s*\)/gi,s=el.getAttribute('style')||'';
+    while((m=re.exec(s))!==null){if(isImage(m[1]))addImg(m[1]);}
+  });
+  doc.querySelectorAll('style').forEach(function(el){
+    var m,re=/url\(\s*['"]?([^'")\s]+)['"]?\s*\)/gi,css=el.textContent||'';
+    while((m=re.exec(css))!==null){if(!m[1].startsWith('data:')&&isImage(m[1]))addImg(m[1]);}
+  });
+
+  // OG / Twitter meta images
+  doc.querySelectorAll('meta[property="og:image"],meta[name="twitter:image"],meta[property="og:image:url"]').forEach(function(el){addImg(el.getAttribute('content'));});
+
+  // Favicon
+  doc.querySelectorAll('link[rel~="icon"][href],link[rel~="apple-touch-icon"][href]').forEach(function(el){addImg(el.getAttribute('href'));});
+
+  // Data background attributes
+  doc.querySelectorAll('[data-background],[data-bg-src],[data-background-image]').forEach(function(el){
+    ['data-background','data-bg-src','data-background-image'].forEach(function(a){var v=el.getAttribute(a);if(v&&!v.startsWith('{'))addImg(v);});
+  });
+
+  // Video poster
+  doc.querySelectorAll('video[poster]').forEach(function(el){addImg(el.getAttribute('poster'));});
+
+  // Internal page links for subpage crawling
+  doc.querySelectorAll('a[href]').forEach(function(el){
+    var h=el.getAttribute('href');
+    if(!h||/^(#|mailto:|tel:|javascript:|ftp:)/.test(h))return;
+    var x=abs(base,h);
+    if(x&&same(pageUrl,x)){
+      var c=x.split('#')[0].replace(/\/$/,'');
+      if(!/\.(jpe?g|png|gif|webp|svg|ico|js|css|woff|ttf|pdf|zip|mp4|mp3)(\?|$)/i.test(c))links.add(c);
+    }
+  });
+
+  return{imgs:Array.from(imgs),links:Array.from(links)};
 }
 
-async function run(){
+function addImageToResults(url,pageUrl){
+  if(images[url])return;
+  images[url]={page:pageUrl,broken:false};
+  var fn=eh(gname(url));
+  var pu=eh(pageUrl);
+  var su=url.replace(/"/g,'%22');
+  var card=document.createElement('div');
+  card.className='card';
+  card.id='card-'+Object.keys(images).length;
+  card.innerHTML='<div class="thumb"><img src="'+su+'" loading="lazy" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'flex\';this.closest(\'.card\').querySelector(\'.badge\').className=\'badge berr\';this.closest(\'.card\').querySelector(\'.badge\').textContent=\'BLOCKED\'"><div style="display:none;width:100%;height:100%;align-items:center;justify-content:center;font-size:28px">🚫</div></div><div class="ameta"><div class="afn">'+fn+'</div><div class="apg">'+pu+'</div></div><span class="badge bok">VISIBLE</span>';
+  document.getElementById('grid').appendChild(card);
+  document.getElementById('sImgs').textContent=Object.keys(images).length;
+}
+
+function updateStatus(){
+  var total=Object.keys(visited).length;
+  var inQ=queue.length;
+  st('Crawled '+pages+'/'+maxPages+' pages, '+Object.keys(images).length+' images found. Active: '+activeCount+', Queue: '+inQ);
+  pr((pages/maxPages)*90);
+}
+
+function processQueue(){
+  while(activeCount<concur&&queue.length>0&&pages+activeCount<maxPages){
+    var item=queue.shift();
+    if(visited[item.url])continue;
+    visited[item.url]=true;
+    activeCount++;
+    crawlPage(item);
+  }
+  if(activeCount===0&&queue.length===0){
+    finish();
+  }
+}
+
+async function crawlPage(item){
+  L('Crawling: '+item.url);
+  updateStatus();
+  try{
+    var html=await fetchPage(item.url);
+    pages++;
+    var r=extractFromHtml(html,item.url);
+    L('  '+r.imgs.length+' images, '+r.links.length+' links on '+item.url,'ok');
+
+    // Add images to results immediately (streaming)
+    for(var i=0;i<r.imgs.length;i++){
+      addImageToResults(r.imgs[i],item.url);
+    }
+
+    // Queue subpages
+    if(doSub&&item.d<maxD){
+      for(var j=0;j<r.links.length;j++){
+        var lk=r.links[j];
+        if(!visited[lk]&&pages+activeCount+queue.length<maxPages*2){
+          queue.push({url:lk,d:item.d+1});
+        }
+      }
+    }
+  }catch(e){
+    fails++;
+    L('FAILED: '+item.url+' => '+e.message,'err');
+    if(fails>0){document.getElementById('sFails').textContent=fails;document.getElementById('sFailChip').style.display='flex';}
+  }
+  activeCount--;
+  updateStatus();
+  processQueue();
+}
+
+function finish(){
+  pr(100);
+  var imgCount=Object.keys(images).length;
+  document.getElementById('sPages').textContent=pages;
+  document.getElementById('sImgs').textContent=imgCount;
+  document.getElementById('statsRow').style.display='flex';
+  if(imgCount===0){
+    document.getElementById('results').innerHTML='<div class="empty">No images found. Check the log for details.</div>';
+  }
+  st('Done. '+pages+' pages crawled, '+imgCount+' images found'+(fails>0?', '+fails+' failed':'')+'.');
+  document.getElementById('goBtn').disabled=false;
+  going=false;
+}
+
+function run(){
   if(going)return;
   var raw=document.getElementById('urlInput').value.trim();
   if(!raw){st('Enter a URL first.');return;}
-  var start;try{start=new URL(raw).href;}catch(e){st('Invalid URL.');return;}
-  var doSub=document.getElementById('doSub').checked;
-  var maxD=parseInt(document.getElementById('maxD').value);
-  var maxP=parseInt(document.getElementById('maxP').value);
-  going=true;assets=[];logs=[];curFilt='all';
+  try{startUrl=new URL(raw).href;}catch(e){st('Invalid URL.');return;}
+
+  doSub=document.getElementById('doSub').checked;
+  maxD=parseInt(document.getElementById('maxD').value);
+  maxPages=parseInt(document.getElementById('maxP').value);
+  concur=parseInt(document.getElementById('concur').value);
+
+  going=true;images={};logs=[];visited={};queue=[];activeCount=0;pages=0;fails=0;
   document.getElementById('goBtn').disabled=true;
   document.getElementById('statsRow').style.display='none';
-  document.getElementById('ftrs').style.display='none';
-  document.getElementById('results').innerHTML='';
+  document.getElementById('sFailChip').style.display='none';
+  document.getElementById('results').innerHTML='<div class="sech">IMAGES</div><div class="grid" id="grid"></div>';
   document.getElementById('pbw').style.display='none';
   document.getElementById('logbox').innerHTML='';
   document.getElementById('logbox').classList.remove('on');
-  document.getElementById('logbtn').style.display='none';
+  document.getElementById('logbtn').style.display='inline';
+  document.getElementById('copybtn').style.display='inline';
+  document.getElementById('logbtn').textContent='Show log';
   st('Starting...');
-  var visited={},queue=[{url:start,d:0}],amap={},pages=0,fails=0;
 
-  function next(){
-    if(queue.length===0||pages>=maxP){done();return;}
-    var item=queue.shift();
-    if(visited[item.url]){next();return;}
-    visited[item.url]=true;
-    st('Crawling '+(pages+1)+'/'+maxP+': '+item.url);
-    pr(((pages+1)/maxP)*85);
-    L('\n--- '+item.url);
-    fetchPage(item.url).then(function(html){
-      pages++;
-      var r=extractAssets(html,item.url);
-      for(var i=0;i<r.assets.length;i++){var au=r.assets[i];if(!amap[au])amap[au]={type:gtype(au),pages:[]};if(amap[au].pages.indexOf(item.url)===-1)amap[au].pages.push(item.url);}
-      if(doSub&&item.d<maxD){for(var j=0;j<r.links.length;j++){var lk=r.links[j];if(!visited[lk])queue.push({url:lk,d:item.d+1});}}
-      setTimeout(next,400);
-    }).catch(function(e){fails++;L('FAILED: '+e.message,'err');setTimeout(next,300);});
-  }
-
-  function done(){
-    pr(100);assets=[];var keys=Object.keys(amap);
-    for(var i=0;i<keys.length;i++){var u=keys[i];assets.push({url:u,type:amap[u].type,pages:amap[u].pages,filename:gname(u),ext:gext(u)});}
-    var imgs=0;for(var i=0;i<assets.length;i++){if(assets[i].type==='image')imgs++;}
-    document.getElementById('sPages').textContent=pages;
-    document.getElementById('sAssets').textContent=assets.length;
-    document.getElementById('sImgs').textContent=imgs;
-    document.getElementById('sOther').textContent=assets.length-imgs;
-    document.getElementById('statsRow').style.display='flex';
-    document.getElementById('logbtn').style.display='inline';
-    if(fails>0){document.getElementById('sFails').textContent=fails;document.getElementById('sFailChip').style.display='flex';}
-    if(assets.length>0){document.getElementById('ftrs').style.display='flex';render('all');st('Done. '+pages+' page'+(pages!==1?'s':'')+' crawled, '+assets.length+' assets found'+(fails>0?', '+fails+' failed':'')+'.');}
-    else{document.getElementById('results').innerHTML='<div class="empty">No assets found. Check the debug log.</div>';st('No assets found.');}
-    document.getElementById('goBtn').disabled=false;going=false;
-  }
-  next();
-}
-
-function filt(t,btn){curFilt=t;document.querySelectorAll('.fb').forEach(function(b){b.classList.remove('on');});btn.classList.add('on');render(t);}
-
-function render(f){
-  var c=document.getElementById('results');
-  var list=f==='all'?assets:assets.filter(function(a){return a.type===f;});
-  if(!list.length){c.innerHTML='<div class="empty">No assets of this type.</div>';return;}
-  var g={};for(var i=0;i<list.length;i++){var t=list[i].type;if(!g[t])g[t]=[];g[t].push(list[i]);}
-  var h='';
-  for(var oi=0;oi<ORDER.length;oi++){
-    var t=ORDER[oi];if(!g[t])continue;
-    h+='<div class="sec"><div class="sech">'+LABELS[t]+' ('+g[t].length+')</div><div class="grid">';
-    for(var i=0;i<g[t].length;i++){
-      var a=g[t][i],su=a.url.replace(/"/g,'%22'),fn=eh(a.filename),pu=eh(a.pages[0]||'');
-      if(a.type==='image'){
-        h+='<div class="card"><div class="thumb"><img src="'+su+'" loading="lazy" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'flex\';this.closest(\'.card\').querySelector(\'.badge\').className=\'badge berr\';this.closest(\'.card\').querySelector(\'.badge\').textContent=\'BLOCKED\'"><div style="display:none;width:100%;height:100%;align-items:center;justify-content:center;font-size:28px">🚫</div></div><div class="ameta"><div class="afn">'+fn+'</div><div class="apg">'+pu+'</div></div><span class="badge bok">VISIBLE</span></div>';
-      }else{
-        h+='<div class="card"><div class="othumb"><span class="aico">'+(ICONS[a.type]||'📦')+'</span><span class="aext">'+eh(a.ext)+'</span></div><div class="ameta"><div class="afn">'+fn+'</div><div class="apg">'+pu+'</div></div><span class="badge bok">VISIBLE</span></div>';
-      }
-    }
-    h+='</div></div>';
-  }
-  c.innerHTML=h;
+  queue.push({url:startUrl,d:0});
+  processQueue();
 }
 </script>
 </body>
