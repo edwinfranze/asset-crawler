@@ -198,7 +198,7 @@ function extractFromHtml(html,pageUrl){
     var x=abs(base,h);
     if(x&&same(pageUrl,x)){
       var c=x.split('#')[0].replace(/\/$/,'');
-      if(!/\.(jpe?g|png|gif|webp|svg|ico|js|css|woff|ttf|pdf|zip|mp4|mp3|docx?|xlsx?|pptx?|rar|gz|doc)(\?|$)/i.test(c))links.add(c);
+      if(!/\.(jpe?g|png|gif|webp|svg|ico|js|css|woff|ttf|pdf|zip|mp4|mp3|docx?|xlsx?|pptx?|rar|gz|doc)(\?|$)/i.test(c)&&!/\/export-events\//i.test(c)&&!/[?&]key=/.test(c))links.add(c);
     }
   });
 
