@@ -187,15 +187,7 @@ async function runWP(){
         var item=items[i];
         var src=item.source_url||'';
         if(src){addImage(src,'WP Media Library','bwp');found++;}
-        // Also grab all sizes
-        var sizes=item.media_details&&item.media_details.sizes?item.media_details.sizes:{};
-        for(var sz in sizes){
-          if(sizes[sz]&&sizes[sz].source_url){
-            var su=sizes[sz].source_url;
-            var clean=directUrl(su);
-            if(!images[clean]){addImage(su,'WP Media ('+sz+')','bwp');}
-          }
-        }
+        
       }
       total+=items.length;
       pr(Math.min(90,10+(page*10)));
