@@ -103,7 +103,7 @@ select{background:var(--sur);border:1px solid var(--bdr);border-radius:8px;color
 <script>
 var images={},going=false,logs=[],visited={},queue=[],activeCount=0,pages=0,fails=0;
 var maxPages=20,concur=8,doSub=true,maxD=2;
-var counts={visible:0,exposed:0,blocked:0,removed:0};
+var counts={visible:0,exposed:0,blocked:0};
 var activeFilter='all';
 
 function setFilter(f){
@@ -200,17 +200,17 @@ function updateStats(){
   document.getElementById('sPages').textContent=pages;
   if(counts.exposed>0){document.getElementById('sExp').textContent=counts.exposed;document.getElementById('sExpChip').style.display='flex';}
   if(counts.blocked>0){document.getElementById('sBlk').textContent=counts.blocked;document.getElementById('sBlkChip').style.display='flex';}
-  if(counts.removed>0){document.getElementById('sRem').textContent=counts.removed;document.getElementById('sRemChip').style.display='flex';}
+  
   document.getElementById('statsRow').style.display='flex';
 }
 
 function initUI(){
   images={};logs=[];visited={};queue=[];activeCount=0;pages=0;fails=0;
-  counts={visible:0,exposed:0,blocked:0,removed:0};
+  counts={visible:0,exposed:0,blocked:0};
   document.getElementById('goBtn').disabled=true;
   document.getElementById('wpBtn').disabled=true;
   document.getElementById('statsRow').style.display='none';
-  ['sExpChip','sBlkChip','sRemChip'].forEach(function(id){document.getElementById(id).style.display='none';});
+  ['sExpChip','sBlkChip'].forEach(function(id){var el=document.getElementById(id);if(el)el.style.display='none';});
   document.getElementById('results').innerHTML='<div class="sech">IMAGES</div><div class="grid" id="grid"></div>';
   document.getElementById('pbw').style.display='none';
   document.getElementById('logbox').innerHTML='';
