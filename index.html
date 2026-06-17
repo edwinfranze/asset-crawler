@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Image Crawler v2.4</title>
+<title>Image Crawler v2.5</title>
 <style>
 :root {
   --bg: #0d1117; --sur: #161b22; --bdr: #30363d;
@@ -78,7 +78,7 @@ select { background: var(--sur); border: 1px solid var(--bdr); border-radius: 8p
 </head>
 <body>
 
-<h1>Image Crawler <span class="ver">v2.4</span></h1>
+<h1>Image Crawler <span class="ver">v2.5</span></h1>
 <p class="sub">Security audit tool — finds all images and tests if they are truly inaccessible.</p>
 
 <input type="url" id="urlInput" value="https://paulus.unicoz.nl/" placeholder="https://example.com"
@@ -320,6 +320,48 @@ function isImageExt(u) {
   return /\.(jpe?g|png|gif|webp|svg|ico|avif|bmp|tiff?)(\?|$)/i.test(u.split('#')[0]);
 }
 
+// Check real HTTP status code via allorigins (returns status_code in JSON)
+async function checkHttpStatus(url) {
+  var ctrl = new AbortController();
+  var tid = setTimeout(function(){ ctrl.abort(); }, 8000);
+  try {
+    var proxyUrl = 'https://api.allorigins.win/get?url=' + encodeURIComponent(url);
+    var resp = await fetch(proxyUrl, { signal: ctrl.signal });
+    clearTimeout(tid);
+    if (!resp.ok) return { code: resp.status };
+    var data = await resp.json();
+    var code = data.status && data.status.http_code ? data.status.http_code : 200;
+    return { code: code };
+  } catch(e) {
+    clearTimeout(tid);
+    return { code: 0 };
+  }
+}
+
+async function checkHttpBtn(btn, url) {
+  var resultEl = btn.nextElementSibling;
+  btn.disabled = true;
+  btn.textContent = 'Checking...';
+  resultEl.textContent = '';
+  var result = await checkHttpStatus(url);
+  btn.textContent = 'Check HTTP status';
+  btn.disabled = false;
+  var code = result.code;
+  var label, color;
+  if      (code === 200) { label = '200 OK — file accessible!';     color = 'var(--exp)'; }
+  else if (code === 301) { label = '301 Redirect (permanent)';       color = 'var(--warn)'; }
+  else if (code === 302) { label = '302 Redirect (temporary)';       color = 'var(--warn)'; }
+  else if (code === 403) { label = '403 Forbidden — server blocked'; color = 'var(--err)'; }
+  else if (code === 404) { label = '404 Not found';                  color = 'var(--mut)'; }
+  else if (code === 410) { label = '410 Gone — permanently deleted'; color = 'var(--ok)'; }
+  else if (code === 0)   { label = 'Timeout / no response';          color = 'var(--mut)'; }
+  else                   { label = 'HTTP ' + code;                   color = 'var(--mut)'; }
+  resultEl.textContent = label;
+  resultEl.style.color = color;
+  log('HTTP ' + code + ': ' + url.split('/').pop() + ' — ' + label, code === 200 ? 'lexp' : code === 410 ? 'lok' : 'lwarn');
+}
+
+
 // ── Add image card ─────────────────────────────────────────────────────────────
 function addImage(rawUrl, sourcePage, attachPage, extraUrls) {
   var url = cleanUrl(rawUrl);
@@ -434,7 +476,10 @@ async function imgErr(cardId) {
   } else {
     bdg.className = 'badge b-blk'; bdg.textContent = 'BLOCKED';
     card.dataset.status = 'blk';
-    ov.innerHTML = '<span class="ico">🔒</span>' + viewLinks;
+    var _bu = bestUrl;
+    ov.innerHTML = '<span class="ico">🔒</span>' + viewLinks +
+      '<button onclick="event.stopPropagation();checkHttpBtn(this,\''+_bu.replace(/\'/g,'%27')+'\')" style="margin-top:4px;background:var(--adim);border:1px solid var(--acc);color:var(--acc);border-radius:6px;padding:2px 8px;font-size:10px;cursor:pointer;font-family:var(--f)">Check HTTP status</button>' +
+      '<span style="font-size:10px;color:var(--mut);margin-top:2px;display:block"></span>';
     S.counts.blk++;
   }
 
