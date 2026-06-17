@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Image Crawler v1.7</title>
+<title>Image Crawler v1.8</title>
 <style>
 :root{--bg:#0d1117;--sur:#161b22;--bdr:#30363d;--acc:#58a6ff;--adim:#1f3556;--txt:#e6edf3;--mut:#8b949e;--ok:#3fb950;--okbg:#1a3a2a;--err:#f85149;--errbg:#3a1a1a;--warn:#d29922;--warnbg:#2a2010;--exp:#ff6b35;--expbg:#3a1a00;--r:10px;--f:-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif}
 *{box-sizing:border-box;margin:0;padding:0}
@@ -62,7 +62,7 @@ select{background:var(--sur);border:1px solid var(--bdr);border-radius:8px;color
 </style>
 </head>
 <body>
-<h1>Image Crawler <span style="font-size:13px;font-weight:400;color:var(--mut)">v1.7</span></h1>
+<h1>Image Crawler <span style="font-size:13px;font-weight:400;color:var(--mut)">v1.8</span></h1>
 <p class="sub">Crawls a website and shows all publicly visible images.</p>
 
 <input type="url" id="urlInput" value="https://paulus.unicoz.nl/" placeholder="https://example.com" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false">
@@ -104,6 +104,8 @@ select{background:var(--sur);border:1px solid var(--bdr);border-radius:8px;color
 var images={},going=false,logs=[],visited={},queue=[],activeCount=0,pages=0,fails=0;
 var maxPages=20,concur=8,doSub=true,maxD=2;
 var counts={visible:0,exposed:0,blocked:0};
+  pendingChecks=0;
+var pendingChecks=0;
 var activeFilter='all';
 
 function setFilter(f){
@@ -186,7 +188,7 @@ async function fetchUrl(targetUrl){
 async function checkImageDirect(imgUrl){
   try{
     var controller=new AbortController();
-    var timer=setTimeout(function(){controller.abort();},5000);
+    var timer=setTimeout(function(){controller.abort();},3000);
     var resp=await fetch(PROXIES[0](imgUrl),{
       headers:{'Accept':'image/*,*/*'},
       signal:controller.signal
@@ -198,6 +200,13 @@ async function checkImageDirect(imgUrl){
     }
     return false;
   }catch(e){return false;}
+}
+
+function checkAllDone(){
+  if(pendingChecks<=0&&!going){
+    var total=Object.keys(images).length;
+    st('Done. '+total+' images: '+counts.visible+' visible, '+counts.exposed+' exposed, '+counts.blocked+' blocked.');
+  }
 }
 
 function updateStats(){
@@ -213,6 +222,7 @@ function updateStats(){
 function initUI(){
   images={};logs=[];visited={};queue=[];activeCount=0;pages=0;fails=0;
   counts={visible:0,exposed:0,blocked:0};
+  pendingChecks=0;
   document.getElementById('goBtn').disabled=true;
   document.getElementById('wpBtn').disabled=true;
   document.getElementById('statsRow').style.display='none';
@@ -230,6 +240,7 @@ function addImage(imgUrl, sourceLabel, badgeClass, attachmentPageUrl){
   var clean=directUrl(imgUrl);
   if(images[clean])return;
   images[clean]={source:sourceLabel,attachPage:attachmentPageUrl||'',status:'pending'};
+  pendingChecks++;
 
   var fn=eh(gname(clean));
   var su=clean.replace(/"/g,'%22');
@@ -269,6 +280,8 @@ function onLoad(img){
   card.dataset.status='visible';
   if(activeFilter!=='all'&&activeFilter!=='visible')card.style.display='none';
   counts.visible++;
+  pendingChecks--;
+  checkAllDone();
   updateStats();
 }
 
@@ -297,6 +310,8 @@ async function onError(img){
     card.dataset.status='exposed';
     if(activeFilter!=='all'&&activeFilter!=='exposed')card.style.display='none';
     counts.exposed++;
+  pendingChecks--;
+  checkAllDone();
   } else {
     badge.className='badge berr';
     badge.textContent='BLOCKED';
@@ -305,6 +320,8 @@ async function onError(img){
     card.dataset.status='blocked';
     if(activeFilter!=='all'&&activeFilter!=='blocked')card.style.display='none';
     counts.blocked++;
+  pendingChecks--;
+  checkAllDone();
   }
   updateStats();
 }
