@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Image Crawler v1.3</title>
+<title>Image Crawler v1.4</title>
 <style>
 :root{--bg:#0d1117;--sur:#161b22;--bdr:#30363d;--acc:#58a6ff;--adim:#1f3556;--txt:#e6edf3;--mut:#8b949e;--ok:#3fb950;--okbg:#1a3a2a;--err:#f85149;--errbg:#3a1a1a;--warn:#d29922;--warnbg:#2a2010;--exp:#ff6b35;--expbg:#3a1a00;--r:10px;--f:-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif}
 *{box-sizing:border-box;margin:0;padding:0}
@@ -27,7 +27,7 @@ select{background:var(--sur);border:1px solid var(--bdr);border-radius:8px;color
 .pbw{background:var(--sur);border-radius:4px;height:4px;margin-top:8px;overflow:hidden;display:none}
 .pb{background:var(--acc);height:100%;width:0%;transition:width .2s}
 .stats{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
-.chip{background:var(--sur);border:1px solid var(--bdr);border-radius:8px;padding:8px 10px;font-size:11px;color:var(--mut);display:flex;flex-direction:column;gap:2px;min-width:56px}
+.chip{background:var(--sur);border:1px solid var(--bdr);border-radius:8px;padding:8px 10px;font-size:11px;color:var(--mut);display:flex;flex-direction:column;gap:2px;min-width:56px;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:outline 0.15s}
 .chip b{font-size:17px;font-weight:700;color:var(--txt)}
 .chip.vis b{color:var(--ok)}
 .chip.exp b{color:var(--exp)}
@@ -62,7 +62,7 @@ select{background:var(--sur);border:1px solid var(--bdr);border-radius:8px;color
 </style>
 </head>
 <body>
-<h1>Image Crawler <span style="font-size:13px;font-weight:400;color:var(--mut)">v1.3</span></h1>
+<h1>Image Crawler <span style="font-size:13px;font-weight:400;color:var(--mut)">v1.4</span></h1>
 <p class="sub">Crawls a website and shows all publicly visible images.</p>
 
 <input type="url" id="urlInput" value="https://paulus.unicoz.nl/" placeholder="https://example.com" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false">
@@ -90,11 +90,11 @@ select{background:var(--sur);border:1px solid var(--bdr);border-radius:8px;color
 <div class="logbox" id="logbox"></div>
 
 <div class="stats" id="statsRow" style="display:none">
-  <div class="chip"><b id="sTotal">0</b>Total</div>
-  <div class="chip vis"><b id="sVis">0</b>Visible</div>
-  <div class="chip exp" id="sExpChip" style="display:none"><b id="sExp">0</b>Exposed</div>
-  <div class="chip blk" id="sBlkChip" style="display:none"><b id="sBlk">0</b>Blocked</div>
-  <div class="chip" id="sRemChip" style="display:none"><b id="sRem">0</b>Removed</div>
+  <div class="chip" onclick="setFilter('all')" title="Show all"><b id="sTotal">0</b>All</div>
+  <div class="chip vis" onclick="setFilter('visible')" title="Show visible only"><b id="sVis">0</b>Visible</div>
+  <div class="chip exp" id="sExpChip" style="display:none" onclick="setFilter('exposed')" title="Show exposed only"><b id="sExp">0</b>Exposed</div>
+  <div class="chip blk" id="sBlkChip" style="display:none" onclick="setFilter('blocked')" title="Show blocked only"><b id="sBlk">0</b>Blocked</div>
+  <div class="chip" id="sRemChip" style="display:none" onclick="setFilter('removed')" title="Show removed only"><b id="sRem">0</b>Removed</div>
   <div class="chip" id="sPgChip"><b id="sPages">0</b>Pages</div>
 </div>
 
@@ -104,6 +104,29 @@ select{background:var(--sur);border:1px solid var(--bdr);border-radius:8px;color
 var images={},going=false,logs=[],visited={},queue=[],activeCount=0,pages=0,fails=0;
 var maxPages=20,concur=8,doSub=true,maxD=2;
 var counts={visible:0,exposed:0,blocked:0,removed:0};
+var activeFilter='all';
+
+function setFilter(f){
+  activeFilter=f;
+  // Update chip styles
+  ['sTotal','sVis','sExp','sBlk','sRem'].forEach(function(id){
+    var el=document.getElementById(id);
+    if(el){
+      var chip=el.closest('.chip');
+      if(chip) chip.style.outline = (
+        (f==='all'&&id==='sTotal')||(f==='visible'&&id==='sVis')||
+        (f==='exposed'&&id==='sExp')||(f==='blocked'&&id==='sBlk')||
+        (f==='removed'&&id==='sRem')
+      ) ? '2px solid var(--acc)' : 'none';
+    }
+  });
+  // Show/hide cards
+  var cards=document.querySelectorAll('.card');
+  cards.forEach(function(card){
+    if(f==='all'){card.style.display='';}
+    else{card.style.display=card.dataset.status===f?'':'none';}
+  });
+}
 
 function isImage(u){return/\.(jpe?g|png|gif|webp|svg|ico|avif|bmp|tiff?)(\?|$)/i.test(u.split('#')[0]);}
 function gname(u){try{var p=new URL(u).pathname;return decodeURIComponent(p.split('/').pop()||p||u);}catch(e){return u;}}
@@ -244,6 +267,8 @@ function onLoad(img){
   badge.className='badge bok';
   badge.textContent='VISIBLE';
   img.closest('.thumb').querySelector('.status-icon').style.display='none';
+  card.dataset.status='visible';
+  if(activeFilter!=='all'&&activeFilter!=='visible')card.style.display='none';
   counts.visible++;
   updateStats();
 }
@@ -279,6 +304,8 @@ async function onError(img){
       card.classList.add('exposed');
       si.innerHTML='<span class="ico">⚠️</span><span class="lbl">Page removed but file still accessible!</span>'+
         (attachPage?'<a href="'+eh(attachPage)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()">View page (410)</a>':'');
+      card.dataset.status='exposed';
+      if(activeFilter!=='all'&&activeFilter!=='exposed')card.style.display='none';
       counts.exposed++;
       L('EXPOSED: '+imgUrl+' - page gone but file accessible!','lexp');
     } else {
@@ -287,6 +314,8 @@ async function onError(img){
       badge.textContent='REMOVED';
       si.innerHTML='<span class="ico">🗑️</span><span class="lbl">Page removed (410), file blocked</span>'+
         (attachPage?'<a href="'+eh(attachPage)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()">View page (410)</a>':'');
+      card.dataset.status='removed';
+      if(activeFilter!=='all'&&activeFilter!=='removed')card.style.display='none';
       counts.removed++;
     }
   } else {
@@ -295,6 +324,8 @@ async function onError(img){
     badge.textContent='BLOCKED';
     si.innerHTML='<span class="ico">🔒</span><span class="lbl">Access denied</span>'+
       (attachPage?'<a href="'+eh(attachPage)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()">View on site</a>':'');
+    card.dataset.status='blocked';
+    if(activeFilter!=='all'&&activeFilter!=='blocked')card.style.display='none';
     counts.blocked++;
   }
   updateStats();
