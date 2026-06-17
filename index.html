@@ -3,80 +3,114 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Image Crawler v2.0</title>
+<title>Image Crawler v2.1</title>
 <style>
-:root{--bg:#0d1117;--sur:#161b22;--bdr:#30363d;--acc:#58a6ff;--adim:#1f3556;--txt:#e6edf3;--mut:#8b949e;--ok:#3fb950;--okbg:#1a3a2a;--err:#f85149;--errbg:#3a1a1a;--warn:#d29922;--warnbg:#2a2010;--exp:#ff6b35;--expbg:#3a1a00;--r:10px;--f:-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif}
-*{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);color:var(--txt);font-family:var(--f);font-size:15px;min-height:100vh;padding:20px 16px 40px}
-h1{font-size:22px;font-weight:700;letter-spacing:-.4px;margin-bottom:4px}
-.sub{font-size:13px;color:var(--mut);line-height:1.5;margin-bottom:20px}
-input[type=url]{width:100%;background:var(--sur);border:1px solid var(--bdr);border-radius:var(--r);color:var(--txt);font-family:var(--f);font-size:15px;padding:12px 14px;outline:none;-webkit-appearance:none;margin-bottom:10px}
-input:focus{border-color:var(--acc)}
-input::placeholder{color:var(--mut)}
-.opts{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
-.olbl{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--mut);cursor:pointer}
-.olbl input[type=checkbox]{accent-color:var(--acc);width:16px;height:16px}
-select{background:var(--sur);border:1px solid var(--bdr);border-radius:8px;color:var(--txt);font-family:var(--f);font-size:13px;padding:6px 10px;outline:none;-webkit-appearance:none;cursor:pointer}
-.btnrow{display:flex;gap:10px;margin-bottom:6px}
-#goBtn,#wpBtn{flex:1;border:none;border-radius:var(--r);font-family:var(--f);font-size:15px;font-weight:700;padding:14px;cursor:pointer;-webkit-tap-highlight-color:transparent}
-#goBtn{background:var(--acc);color:#0d1117}
-#wpBtn{background:var(--sur);border:1px solid var(--acc);color:var(--acc)}
-#goBtn:disabled,#wpBtn:disabled{opacity:.4;cursor:not-allowed}
-.note{font-size:11px;color:var(--mut);line-height:1.5}
-#status{margin-top:12px;font-size:13px;color:var(--mut);min-height:18px;word-break:break-all}
-.pbw{background:var(--sur);border-radius:4px;height:4px;margin-top:8px;overflow:hidden;display:none}
-.pb{background:var(--acc);height:100%;width:0%;transition:width .2s}
-.stats{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
-.chip{background:var(--sur);border:1px solid var(--bdr);border-radius:8px;padding:8px 10px;font-size:11px;color:var(--mut);display:flex;flex-direction:column;gap:2px;min-width:56px;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:outline 0.15s}
-.chip b{font-size:17px;font-weight:700;color:var(--txt)}
-.chip.vis b{color:var(--ok)}
-.chip.exp b{color:var(--exp)}
-.chip.blk b{color:var(--err)}
-#results{margin-top:16px}
-.sech{font-size:12px;font-weight:600;color:var(--mut);letter-spacing:.5px;text-transform:uppercase;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--bdr)}
-.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
-.card{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--r);overflow:hidden;position:relative}
-.card.exposed{border-color:var(--exp)}
-.thumb{width:100%;aspect-ratio:16/10;overflow:hidden;background:#0d1117;display:flex;align-items:center;justify-content:center}
-.thumb img{width:100%;height:100%;object-fit:cover}
-.status-icon{display:none;flex-direction:column;align-items:center;justify-content:center;gap:6px;width:100%;height:100%;padding:8px}
-.status-icon .ico{font-size:26px}
-.status-icon .lbl{font-size:10px;color:var(--mut);text-align:center;line-height:1.4}
-.status-icon a{font-size:10px;color:var(--acc);text-decoration:underline;text-align:center}
-.ameta{padding:8px 10px 10px}
-.afn{font-size:11px;color:var(--txt);word-break:break-all;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.apg{font-size:10px;color:var(--mut);margin-top:3px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
-.apg a{color:var(--acc);text-decoration:none}
-.badge{position:absolute;top:6px;right:6px;border-radius:6px;font-size:10px;font-weight:700;padding:2px 6px;text-transform:uppercase}
-.bok{background:var(--okbg);color:var(--ok)}
-.berr{background:var(--errbg);color:var(--err)}
-.bwp{background:#1a2a3a;color:var(--acc)}
-.bexp{background:var(--expbg);color:var(--exp)}
-.brem{background:var(--warnbg);color:var(--warn)}
-.logrow{display:flex;align-items:center;gap:8px;margin-top:8px}
-.logbtn{font-size:12px;color:var(--mut);background:none;border:none;cursor:pointer;text-decoration:underline;font-family:var(--f)}
-.copybtn{font-size:11px;color:var(--acc);background:var(--adim);border:1px solid var(--acc);border-radius:6px;padding:3px 10px;cursor:pointer;font-family:var(--f);display:none}
-.logbox{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--r);font-size:11px;color:var(--mut);padding:10px 12px;margin-top:6px;max-height:220px;overflow-y:auto;font-family:monospace;line-height:1.7;display:none}
-.logbox.on{display:block}
-.lerr{color:var(--err)}.lok{color:var(--ok)}.lwarn{color:var(--warn)}.lexp{color:var(--exp)}
+:root {
+  --bg: #0d1117; --sur: #161b22; --bdr: #30363d;
+  --acc: #58a6ff; --adim: #1f3556;
+  --txt: #e6edf3; --mut: #8b949e;
+  --ok: #3fb950; --okbg: #1a3a2a;
+  --err: #f85149; --errbg: #3a1a1a;
+  --exp: #ff6b35; --expbg: #3a1a00;
+  --warn: #d29922;
+  --r: 10px;
+  --f: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--txt); font-family: var(--f); font-size: 15px; min-height: 100vh; padding: 20px 16px 60px; }
+h1 { font-size: 22px; font-weight: 700; letter-spacing: -.4px; margin-bottom: 4px; }
+.ver { font-size: 13px; font-weight: 400; color: var(--mut); }
+.sub { font-size: 13px; color: var(--mut); line-height: 1.5; margin-bottom: 20px; }
+input[type=url] { width: 100%; background: var(--sur); border: 1px solid var(--bdr); border-radius: var(--r); color: var(--txt); font-family: var(--f); font-size: 15px; padding: 12px 14px; outline: none; -webkit-appearance: none; margin-bottom: 10px; }
+input:focus { border-color: var(--acc); }
+input::placeholder { color: var(--mut); }
+.opts { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 14px; }
+.olbl { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--mut); cursor: pointer; }
+.olbl input[type=checkbox] { accent-color: var(--acc); width: 16px; height: 16px; }
+select { background: var(--sur); border: 1px solid var(--bdr); border-radius: 8px; color: var(--txt); font-family: var(--f); font-size: 13px; padding: 6px 10px; outline: none; -webkit-appearance: none; cursor: pointer; }
+.btnrow { display: flex; gap: 10px; margin-bottom: 8px; }
+.btn { flex: 1; border: none; border-radius: var(--r); font-family: var(--f); font-size: 15px; font-weight: 700; padding: 14px; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: opacity .15s; }
+.btn:disabled { opacity: .4; cursor: not-allowed; }
+.btn-primary { background: var(--acc); color: #0d1117; }
+.btn-secondary { background: var(--sur); border: 1px solid var(--acc); color: var(--acc); }
+.note { font-size: 11px; color: var(--mut); line-height: 1.5; margin-bottom: 4px; }
+#status { margin-top: 12px; font-size: 13px; color: var(--mut); min-height: 18px; word-break: break-all; }
+.pbw { background: var(--sur); border-radius: 4px; height: 4px; margin-top: 8px; overflow: hidden; display: none; }
+.pb { background: var(--acc); height: 100%; width: 0%; transition: width .3s; }
+
+/* Stats chips - clickable filters */
+.stats { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+.chip { background: var(--sur); border: 1px solid var(--bdr); border-radius: 8px; padding: 8px 12px; font-size: 12px; color: var(--mut); display: flex; flex-direction: column; gap: 2px; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: border-color .15s, outline .15s; min-width: 60px; }
+.chip:active { opacity: .8; }
+.chip.active { outline: 2px solid var(--acc); }
+.chip b { font-size: 17px; font-weight: 700; color: var(--txt); }
+.chip.c-vis b { color: var(--ok); }
+.chip.c-exp b { color: var(--exp); }
+.chip.c-blk b { color: var(--err); }
+
+/* Log */
+.logrow { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+.logbtn { font-size: 12px; color: var(--mut); background: none; border: none; cursor: pointer; text-decoration: underline; font-family: var(--f); display: none; }
+.copybtn { font-size: 11px; color: var(--acc); background: var(--adim); border: 1px solid var(--acc); border-radius: 6px; padding: 3px 10px; cursor: pointer; font-family: var(--f); display: none; }
+.logbox { background: var(--sur); border: 1px solid var(--bdr); border-radius: var(--r); font-size: 11px; color: var(--mut); padding: 10px 12px; margin-top: 6px; max-height: 200px; overflow-y: auto; font-family: monospace; line-height: 1.7; display: none; }
+.logbox.on { display: block; }
+.lerr { color: var(--err); } .lok { color: var(--ok); } .lwarn { color: var(--warn); } .lexp { color: var(--exp); }
+
+/* Results grid */
+#results { margin-top: 16px; }
+.sech { font-size: 12px; font-weight: 600; color: var(--mut); letter-spacing: .5px; text-transform: uppercase; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid var(--bdr); }
+.grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.card { background: var(--sur); border: 1px solid var(--bdr); border-radius: var(--r); overflow: hidden; position: relative; }
+.card.c-exposed { border-color: var(--exp); }
+
+/* Thumbnail */
+.thumb { width: 100%; aspect-ratio: 16/10; overflow: hidden; background: #0d1117; display: flex; align-items: center; justify-content: center; }
+.thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.thumb-overlay { display: none; flex-direction: column; align-items: center; justify-content: center; gap: 4px; width: 100%; height: 100%; padding: 8px; text-align: center; }
+.thumb-overlay .ico { font-size: 24px; }
+.thumb-overlay a { font-size: 10px; color: var(--acc); text-decoration: underline; display: block; margin-top: 2px; }
+
+/* Card meta */
+.ameta { padding: 8px 10px 10px; }
+.afn { font-size: 11px; color: var(--txt); word-break: break-all; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.asrc { font-size: 10px; color: var(--mut); margin-top: 3px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.asrc a { color: var(--acc); text-decoration: none; }
+
+/* Badge */
+.badge { position: absolute; top: 6px; right: 6px; border-radius: 6px; font-size: 10px; font-weight: 700; padding: 2px 6px; text-transform: uppercase; }
+.b-vis { background: var(--okbg); color: var(--ok); }
+.b-exp { background: var(--expbg); color: var(--exp); }
+.b-blk { background: var(--errbg); color: var(--err); }
+.b-chk { background: var(--adim); color: var(--acc); }
+.b-wp  { background: #1a2a3a; color: var(--acc); }
+
+.empty { text-align: center; padding: 40px 20px; color: var(--mut); font-size: 14px; line-height: 1.7; }
 </style>
 </head>
 <body>
-<h1>Image Crawler <span style="font-size:13px;font-weight:400;color:var(--mut)">v2.0</span></h1>
-<p class="sub">Crawls a website and shows all publicly visible images.</p>
 
-<input type="url" id="urlInput" value="https://paulus.unicoz.nl/" placeholder="https://example.com" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false">
+<h1>Image Crawler <span class="ver">v2.1</span></h1>
+<p class="sub">Security audit tool — finds all images and tests if they are truly inaccessible.</p>
+
+<input type="url" id="urlInput" value="https://paulus.unicoz.nl/" placeholder="https://example.com"
+  autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false">
 
 <div class="opts">
   <label class="olbl"><input type="checkbox" id="doSub" checked> Subpages</label>
-  <label class="olbl">Depth: <select id="maxD"><option>1</option><option selected>2</option><option>3</option></select></label>
-  <label class="olbl">Max pages: <select id="maxP"><option>10</option><option selected>20</option><option>50</option><option>100</option></select></label>
-  <label class="olbl">Parallel: <select id="concur"><option>3</option><option>5</option><option selected>8</option><option>10</option><option>15</option></select></label>
+  <label class="olbl">Depth:
+    <select id="maxD"><option>1</option><option selected>2</option><option>3</option></select>
+  </label>
+  <label class="olbl">Max pages:
+    <select id="maxP"><option>10</option><option selected>20</option><option>50</option><option>100</option></select>
+  </label>
+  <label class="olbl">Parallel:
+    <select id="concur"><option>3</option><option>5</option><option selected>8</option><option>10</option><option>15</option></select>
+  </label>
 </div>
 
 <div class="btnrow">
-  <button id="goBtn" onclick="runCrawl()">Crawl pages</button>
-  <button id="wpBtn" onclick="runWP()">WP Media API</button>
+  <button id="btnCrawl" class="btn btn-primary" onclick="startCrawl()">Crawl pages</button>
+  <button id="btnWP"    class="btn btn-secondary" onclick="startWP()">WP Media API</button>
 </div>
 <p class="note">WP Media API finds ALL uploaded images including unused ones.</p>
 
@@ -84,373 +118,511 @@ select{background:var(--sur);border:1px solid var(--bdr);border-radius:8px;color
 <div class="pbw" id="pbw"><div class="pb" id="pb"></div></div>
 
 <div class="logrow">
-  <button class="logbtn" id="logbtn" onclick="toggleLog()" style="display:none">Show log</button>
+  <button class="logbtn" id="logbtn" onclick="toggleLog()">Show log</button>
   <button class="copybtn" id="copybtn" onclick="copyLog()">Copy log</button>
 </div>
 <div class="logbox" id="logbox"></div>
 
 <div class="stats" id="statsRow" style="display:none">
-  <div class="chip" onclick="setFilter('all')" title="Show all"><b id="sTotal">0</b>All</div>
-  <div class="chip vis" onclick="setFilter('visible')" title="Show visible only"><b id="sVis">0</b>Visible</div>
-  <div class="chip exp" id="sExpChip" style="display:none" onclick="setFilter('exposed')" title="Show exposed only"><b id="sExp">0</b>Exposed</div>
-  <div class="chip blk" id="sBlkChip" style="display:none" onclick="setFilter('blocked')" title="Show blocked only"><b id="sBlk">0</b>Blocked</div>
-  
-  <div class="chip" id="sPgChip"><b id="sPages">0</b>Pages</div>
+  <div class="chip active" id="chip-all"  onclick="setFilter('all')">  <b id="cnt-all">0</b>All</div>
+  <div class="chip c-vis"  id="chip-vis"  onclick="setFilter('vis')">  <b id="cnt-vis">0</b>Visible</div>
+  <div class="chip c-exp"  id="chip-exp"  onclick="setFilter('exp')" style="display:none"><b id="cnt-exp">0</b>Exposed</div>
+  <div class="chip c-blk"  id="chip-blk"  onclick="setFilter('blk')" style="display:none"><b id="cnt-blk">0</b>Blocked</div>
+  <div class="chip"        id="chip-pages"><b id="cnt-pages">0</b>Pages</div>
 </div>
 
 <div id="results"></div>
 
 <script>
-var images={},going=false,logs=[],visited={},queue=[],activeCount=0,pages=0,fails=0;
-var maxPages=20,concur=8,doSub=true,maxD=2;
-var counts={visible:0,exposed:0,blocked:0};
-  pendingChecks=0;
-var pendingChecks=0;
-var activeFilter='all';
+// ─── State ────────────────────────────────────────────────────────────────────
+var state = {
+  images: {},        // url -> {status, attachPage, sourcePage}
+  logs:   [],
+  going:  false,
+  filter: 'all',
+  counts: { all:0, vis:0, exp:0, blk:0 },
+  pending: 0,        // images still being checked
+  pages:   0,
+  fails:   0
+};
 
-function setFilter(f){
-  activeFilter=f;
-  // Update chip styles
-  ['sTotal','sVis','sExp','sBlk','sRem'].forEach(function(id){
-    var el=document.getElementById(id);
-    if(el){
-      var chip=el.closest('.chip');
-      if(chip) chip.style.outline = (
-        (f==='all'&&id==='sTotal')||(f==='visible'&&id==='sVis')||
-        (f==='exposed'&&id==='sExp')||(f==='blocked'&&id==='sBlk')||
-        (f==='removed'&&id==='sRem')
-      ) ? '2px solid var(--acc)' : 'none';
-    }
-  });
-  // Show/hide cards
-  var cards=document.querySelectorAll('.card');
-  cards.forEach(function(card){
-    if(f==='all'){card.style.display='';}
-    else{card.style.display=card.dataset.status===f?'':'none';}
-  });
-}
-
-function isImage(u){return/\.(jpe?g|png|gif|webp|svg|ico|avif|bmp|tiff?)(\?|$)/i.test(u.split('#')[0]);}
-function gname(u){try{var p=new URL(u).pathname;return decodeURIComponent(p.split('/').pop()||p||u);}catch(e){return u;}}
-function directUrl(u){return u.split('?')[0].replace(/-\d+x\d+(\.(?:jpe?g|png|gif|webp|svg|avif))$/i,'$1');}
-function abs(base,h){if(!h||/^(data:|blob:|javascript:)/.test(h))return null;try{return new URL(h,base).href;}catch(e){return null;}}
-function same(base,u){try{return new URL(u).hostname===new URL(base).hostname;}catch(e){return false;}}
-function eh(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
-
-function L(m,c){
-  c=c||'';
-  var t=new Date().toLocaleTimeString('en',{hour12:false,hour:'2-digit',minute:'2-digit',second:'2-digit'});
-  logs.push({line:'['+t+'] '+m,c:c});
-  var b=document.getElementById('logbox');
-  b.innerHTML=logs.map(function(l){return'<span class="l'+l.c+'">'+eh(l.line)+'</span>';}).join('<br>');
-  b.scrollTop=b.scrollHeight;
-}
-function st(m){document.getElementById('status').textContent=m;}
-function pr(v){document.getElementById('pbw').style.display='block';document.getElementById('pb').style.width=Math.min(100,v)+'%';}
-function toggleLog(){var b=document.getElementById('logbox');b.classList.toggle('on');document.getElementById('logbtn').textContent=b.classList.contains('on')?'Hide log':'Show log';}
-function copyLog(){
-  var text=logs.map(function(l){return l.line;}).join('\n');
-  if(navigator.clipboard&&navigator.clipboard.writeText){
-    navigator.clipboard.writeText(text).then(function(){
-      var btn=document.getElementById('copybtn');btn.textContent='Copied!';setTimeout(function(){btn.textContent='Copy log';},2000);
-    });
-  } else {
-    var ta=document.createElement('textarea');ta.value=text;ta.style.cssText='position:fixed;opacity:0';
-    document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);
-    var btn=document.getElementById('copybtn');btn.textContent='Copied!';setTimeout(function(){btn.textContent='Copy log';},2000);
-  }
-}
-
-var PROXIES=[
-  function(u){return'https://api.allorigins.win/raw?url='+encodeURIComponent(u);},
-  function(u){return'https://api.allorigins.win/get?url='+encodeURIComponent(u);},
-  function(u){return'https://corsproxy.io/?url='+encodeURIComponent(u);}
+// ─── Proxies ──────────────────────────────────────────────────────────────────
+var PROXIES = [
+  function(u){ return 'https://api.allorigins.win/raw?url=' + encodeURIComponent(u); },
+  function(u){ return 'https://api.allorigins.win/get?url='  + encodeURIComponent(u); },
+  function(u){ return 'https://corsproxy.io/?url='           + encodeURIComponent(u); }
 ];
 
-async function fetchUrl(targetUrl){
-  var lastErr='';
-  for(var i=0;i<PROXIES.length;i++){
-    try{
-      var controller=new AbortController();
-      var timer=setTimeout(function(){controller.abort();},15000);
-      var resp=await fetch(PROXIES[i](targetUrl),{
-        headers:{'Accept':'*/*'},
-        signal:controller.signal
+// Fetch with timeout and proxy fallback — for HTML/JSON content
+async function fetchContent(url, timeoutMs) {
+  timeoutMs = timeoutMs || 15000;
+  var lastErr = '';
+  for (var i = 0; i < PROXIES.length; i++) {
+    var ctrl = new AbortController();
+    var tid  = setTimeout(function(){ ctrl.abort(); }, timeoutMs);
+    try {
+      var resp = await fetch(PROXIES[i](url), {
+        headers: { 'Accept': '*/*' },
+        signal: ctrl.signal
       });
-      clearTimeout(timer);
-      if(!resp.ok){lastErr='HTTP '+resp.status;continue;}
-      var text=await resp.text();
-      if(text.trim().startsWith('{')){try{var j=JSON.parse(text);if(j.contents)text=j.contents;}catch(e){}}
-      if(text.length<50){lastErr='Empty';continue;}
+      clearTimeout(tid);
+      if (!resp.ok) { lastErr = 'HTTP ' + resp.status; continue; }
+      var text = await resp.text();
+      // allorigins /get wraps in JSON
+      if (text.trim().charAt(0) === '{') {
+        try { var j = JSON.parse(text); if (j.contents) text = j.contents; } catch(e) {}
+      }
+      if (text.length < 50) { lastErr = 'Empty response'; continue; }
       return text;
-    }catch(e){clearTimeout(timer);lastErr=e.message;L('Proxy '+i+' timeout/error: '+e.message,'lwarn');}
-  }
-  throw new Error(lastErr||'All proxies failed');
-}
-
-
-
-// Check if image file itself is directly accessible
-async function checkImageDirect(imgUrl){
-  try{
-    var controller=new AbortController();
-    var timer=setTimeout(function(){controller.abort();},3000);
-    var resp=await fetch(PROXIES[0](imgUrl),{
-      headers:{'Accept':'image/*,*/*'},
-      signal:controller.signal
-    });
-    clearTimeout(timer);
-    if(resp.ok){
-      var ct=resp.headers.get('content-type')||'';
-      return ct.includes('image')||ct.includes('octet');
+    } catch(e) {
+      clearTimeout(tid);
+      lastErr = e.message;
+      log('Proxy ' + i + ' failed: ' + e.message, 'lwarn');
     }
-    return false;
-  }catch(e){return false;}
+  }
+  throw new Error(lastErr || 'All proxies failed');
 }
 
-function checkAllDone(){
-  if(pendingChecks<=0&&!going){
-    var total=Object.keys(images).length;
-    st('Done. '+total+' images: '+counts.visible+' visible, '+counts.exposed+' exposed, '+counts.blocked+' blocked.');
+// Test if an image file is directly reachable via proxy — short timeout
+async function probeImage(url) {
+  var ctrl = new AbortController();
+  var tid  = setTimeout(function(){ ctrl.abort(); }, 4000);
+  try {
+    var resp = await fetch(PROXIES[0](url), {
+      headers: { 'Accept': 'image/*,*/*' },
+      signal: ctrl.signal
+    });
+    clearTimeout(tid);
+    if (!resp.ok) return false;
+    var ct = resp.headers.get('content-type') || '';
+    return ct.indexOf('image') !== -1 || ct.indexOf('octet') !== -1;
+  } catch(e) {
+    clearTimeout(tid);
+    return false;
   }
 }
 
-function updateStats(){
-  document.getElementById('sTotal').textContent=Object.keys(images).length;
-  document.getElementById('sVis').textContent=counts.visible;
-  document.getElementById('sPages').textContent=pages;
-  if(counts.exposed>0){document.getElementById('sExp').textContent=counts.exposed;document.getElementById('sExpChip').style.display='flex';}
-  if(counts.blocked>0){document.getElementById('sBlk').textContent=counts.blocked;document.getElementById('sBlkChip').style.display='flex';}
-  
-  document.getElementById('statsRow').style.display='flex';
+// ─── Logging ──────────────────────────────────────────────────────────────────
+function log(msg, cls) {
+  cls = cls || '';
+  var t = new Date().toLocaleTimeString('en', {hour12:false,hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  state.logs.push({ t: t, msg: msg, cls: cls });
+  var box = document.getElementById('logbox');
+  var line = '<span class="' + cls + '">[' + t + '] ' + esc(msg) + '</span>';
+  box.innerHTML += line + '<br>';
+  box.scrollTop = box.scrollHeight;
+}
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function toggleLog() {
+  var box = document.getElementById('logbox');
+  box.classList.toggle('on');
+  document.getElementById('logbtn').textContent = box.classList.contains('on') ? 'Hide log' : 'Show log';
+}
+function copyLog() {
+  var text = state.logs.map(function(l){ return '[' + l.t + '] ' + l.msg; }).join('\n');
+  var btn = document.getElementById('copybtn');
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(function(){
+      btn.textContent = 'Copied!';
+      setTimeout(function(){ btn.textContent = 'Copy log'; }, 2000);
+    });
+  } else {
+    var ta = document.createElement('textarea');
+    ta.value = text; ta.style.cssText = 'position:fixed;opacity:0';
+    document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+    btn.textContent = 'Copied!';
+    setTimeout(function(){ btn.textContent = 'Copy log'; }, 2000);
+  }
 }
 
-function initUI(){
-  images={};logs=[];visited={};queue=[];activeCount=0;pages=0;fails=0;
-  counts={visible:0,exposed:0,blocked:0};
-  pendingChecks=0;
-  document.getElementById('goBtn').disabled=true;
-  document.getElementById('wpBtn').disabled=true;
-  document.getElementById('statsRow').style.display='none';
-  ['sExpChip','sBlkChip'].forEach(function(id){var el=document.getElementById(id);if(el)el.style.display='none';});
-  document.getElementById('results').innerHTML='<div class="sech">IMAGES</div><div class="grid" id="grid"></div>';
-  document.getElementById('pbw').style.display='none';
-  document.getElementById('logbox').innerHTML='';
+// ─── UI helpers ───────────────────────────────────────────────────────────────
+function setStatus(msg) { document.getElementById('status').textContent = msg; }
+function setProgress(v) {
+  document.getElementById('pbw').style.display = 'block';
+  document.getElementById('pb').style.width = Math.min(100, v) + '%';
+}
+function updateCounts() {
+  document.getElementById('cnt-all').textContent   = state.counts.all;
+  document.getElementById('cnt-vis').textContent   = state.counts.vis;
+  document.getElementById('cnt-exp').textContent   = state.counts.exp;
+  document.getElementById('cnt-blk').textContent   = state.counts.blk;
+  document.getElementById('cnt-pages').textContent = state.pages;
+  if (state.counts.exp > 0) document.getElementById('chip-exp').style.display = '';
+  if (state.counts.blk > 0) document.getElementById('chip-blk').style.display = '';
+  document.getElementById('statsRow').style.display = 'flex';
+}
+function setFilter(f) {
+  state.filter = f;
+  ['all','vis','exp','blk'].forEach(function(k){
+    var el = document.getElementById('chip-' + k);
+    if (el) el.classList.toggle('active', k === f);
+  });
+  document.querySelectorAll('.card').forEach(function(card){
+    card.style.display = (f === 'all' || card.dataset.status === f) ? '' : 'none';
+  });
+}
+function setButtons(disabled) {
+  document.getElementById('btnCrawl').disabled = disabled;
+  document.getElementById('btnWP').disabled    = disabled;
+}
+
+// ─── Init / reset ─────────────────────────────────────────────────────────────
+function init() {
+  state.images  = {};
+  state.logs    = [];
+  state.going   = true;
+  state.filter  = 'all';
+  state.counts  = { all:0, vis:0, exp:0, blk:0 };
+  state.pending = 0;
+  state.pages   = 0;
+  state.fails   = 0;
+
+  setButtons(true);
+  document.getElementById('statsRow').style.display    = 'none';
+  document.getElementById('chip-exp').style.display    = 'none';
+  document.getElementById('chip-blk').style.display    = 'none';
+  document.getElementById('results').innerHTML         = '<div class="sech">IMAGES</div><div class="grid" id="grid"></div>';
+  document.getElementById('pbw').style.display         = 'none';
+  document.getElementById('pb').style.width            = '0%';
+  document.getElementById('logbox').innerHTML          = '';
   document.getElementById('logbox').classList.remove('on');
-  document.getElementById('logbtn').style.display='inline';
-  document.getElementById('copybtn').style.display='inline';
-  document.getElementById('logbtn').textContent='Show log';
+  document.getElementById('logbtn').style.display      = 'inline';
+  document.getElementById('copybtn').style.display     = 'inline';
+  document.getElementById('logbtn').textContent        = 'Show log';
+
+  // Reset chip active state
+  ['all','vis','exp','blk'].forEach(function(k){
+    var el = document.getElementById('chip-' + k);
+    if (el) el.classList.toggle('active', k === 'all');
+  });
 }
 
-function addImage(imgUrl, sourceLabel, badgeClass, attachmentPageUrl){
-  var clean=directUrl(imgUrl);
-  if(images[clean])return;
-  images[clean]={source:sourceLabel,attachPage:attachmentPageUrl||'',status:'pending'};
-  pendingChecks++;
+function finish() {
+  state.going = false;
+  setButtons(false);
+  setProgress(100);
+  setStatus('Done. ' + state.counts.all + ' images — ' +
+    state.counts.vis + ' visible, ' +
+    state.counts.exp + ' exposed, ' +
+    state.counts.blk + ' blocked' +
+    (state.fails > 0 ? ', ' + state.fails + ' pages failed' : '') + '.');
+  log('Complete: ' + state.counts.vis + ' visible, ' + state.counts.exp + ' exposed, ' + state.counts.blk + ' blocked', 'lok');
+}
 
-  var fn=eh(gname(clean));
-  var su=clean.replace(/"/g,'%22');
-  var sourceHtml=attachmentPageUrl
-    ?'<a href="'+eh(attachmentPageUrl)+'" target="_blank" rel="noopener">'+eh(attachmentPageUrl.replace(/https?:\/\//,'').slice(0,40))+'</a>'
-    :eh(sourceLabel.replace(/https?:\/\//,'').slice(0,40));
+// ─── Pending tracker ──────────────────────────────────────────────────────────
+function checkDone() {
+  if (!state.going && state.pending === 0) finish();
+}
 
-  var card=document.createElement('div');
-  card.className='card';
-  card.id='img-'+Object.keys(images).length;
-  card.dataset.imgUrl=clean;
-  card.dataset.attachPage=attachmentPageUrl||'';
+// ─── Add image card ───────────────────────────────────────────────────────────
+function cleanUrl(u) {
+  return u.split('?')[0].replace(/-\d+x\d+(\.(?:jpe?g|png|gif|webp|svg|avif))$/i, '$1');
+}
+function fileName(u) {
+  try { var p = new URL(u).pathname; return decodeURIComponent(p.split('/').pop() || p || u); }
+  catch(e) { return u; }
+}
 
-  card.innerHTML=
-    '<a href="'+su+'" target="_blank" rel="noopener" style="display:block;text-decoration:none">'+
-      '<div class="thumb">'+
-        '<img src="'+su+'" loading="lazy" onload="onLoad(this)" onerror="onError(this)">'+
-        '<div class="status-icon" id="si-'+Object.keys(images).length+'">'+
-          '<span class="ico">⏳</span>'+
-          '<span class="lbl">Checking...</span>'+
-        '</div>'+
-      '</div>'+
-    '</a>'+
-    '<div class="ameta"><div class="afn">'+fn+'</div><div class="apg">'+sourceHtml+'</div></div>'+
-    '<span class="badge '+badgeClass+'">VISIBLE</span>';
+function addImage(rawUrl, sourcePage, attachPage) {
+  var url = cleanUrl(rawUrl);
+  if (state.images[url]) return;
+  state.images[url] = { status: 'chk', sourcePage: sourcePage || '', attachPage: attachPage || '' };
+  state.pending++;
+  state.counts.all++;
+  updateCounts();
+
+  var fn  = esc(fileName(url));
+  var su  = url.replace(/"/g, '%22');
+  var src = attachPage
+    ? '<a href="' + esc(attachPage) + '" target="_blank" rel="noopener">' + esc((attachPage).replace(/https?:\/\//,'').slice(0,40)) + '</a>'
+    : esc((sourcePage||'').replace(/https?:\/\//,'').slice(0,40));
+
+  var card = document.createElement('div');
+  card.className    = 'card';
+  card.dataset.url  = url;
+  card.dataset.status = 'chk';
+
+  card.innerHTML =
+    '<a href="' + su + '" target="_blank" rel="noopener" style="display:block;text-decoration:none">' +
+      '<div class="thumb">' +
+        '<img src="' + su + '" loading="lazy" onload="imgLoaded(this)" onerror="imgFailed(this)">' +
+        '<div class="thumb-overlay" id="ov-' + state.counts.all + '"></div>' +
+      '</div>' +
+    '</a>' +
+    '<div class="ameta"><div class="afn">' + fn + '</div><div class="asrc">' + src + '</div></div>' +
+    '<span class="badge b-chk" id="bdg-' + state.counts.all + '">CHECKING</span>';
+
+  // Store overlay/badge IDs on card for fast lookup
+  card.dataset.ov  = 'ov-'  + state.counts.all;
+  card.dataset.bdg = 'bdg-' + state.counts.all;
 
   document.getElementById('grid').appendChild(card);
-  updateStats();
+
+  // Apply current filter
+  if (state.filter !== 'all' && state.filter !== 'chk') card.style.display = 'none';
 }
 
-function onLoad(img){
-  var card=img.closest('.card');
-  var badge=card.querySelector('.badge');
-  badge.className='badge bok';
-  badge.textContent='VISIBLE';
-  img.closest('.thumb').querySelector('.status-icon').style.display='none';
-  card.dataset.status='visible';
-  if(activeFilter!=='all'&&activeFilter!=='visible')card.style.display='none';
-  counts.visible++;
-  pendingChecks--;
-  checkAllDone();
-  updateStats();
+function imgLoaded(img) {
+  var card  = img.closest('.card');
+  var url   = card.dataset.url;
+  var badge = document.getElementById(card.dataset.bdg);
+
+  badge.className   = 'badge b-vis';
+  badge.textContent = 'VISIBLE';
+  card.dataset.status = 'vis';
+  if (state.filter !== 'all' && state.filter !== 'vis') card.style.display = 'none';
+
+  state.images[url].status = 'vis';
+  state.counts.vis++;
+  state.pending--;
+  updateCounts();
+  checkDone();
 }
 
-async function onError(img){
-  img.style.display='none';
-  var card=img.closest('.card');
-  var badge=card.querySelector('.badge');
-  var si=card.querySelector('.status-icon');
-  si.style.display='flex';
-  var imgUrl=card.dataset.imgUrl;
-  var attachPage=card.dataset.attachPage;
+async function imgFailed(img) {
+  img.style.display = 'none';
+  var card    = img.closest('.card');
+  var url     = card.dataset.url;
+  var badge   = document.getElementById(card.dataset.bdg);
+  var overlay = document.getElementById(card.dataset.ov);
+  var attach  = state.images[url].attachPage;
 
-  badge.className='badge brem';
-  badge.textContent='CHECKING...';
-  si.innerHTML='<span class="ico">🔍</span><span class="lbl">Testing file access...</span>';
+  // Show checking state
+  overlay.style.display = 'flex';
+  overlay.innerHTML = '<span class="ico">🔍</span>';
+  badge.className   = 'badge b-chk';
+  badge.textContent = 'CHECKING';
 
-  var fileAccessible=await checkImageDirect(imgUrl);
-  L((fileAccessible?'EXPOSED':'Blocked')+': '+gname(imgUrl),fileAccessible?'lexp':'lwarn');
+  // Probe whether file is reachable via proxy
+  var reachable = await probeImage(url);
+  log((reachable ? 'EXPOSED' : 'Blocked') + ': ' + fileName(url), reachable ? 'lexp' : 'lwarn');
 
-  if(fileAccessible){
-    badge.className='badge bexp';
-    badge.textContent='EXPOSED';
-    card.classList.add('exposed');
-    si.innerHTML='<span class="ico">⚠️</span><span class="lbl">File reachable via proxy!</span>'+
-      (attachPage?'<a href="'+eh(attachPage)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()">View on site</a>':'');
-    card.dataset.status='exposed';
-    if(activeFilter!=='all'&&activeFilter!=='exposed')card.style.display='none';
-    counts.exposed++;
-  pendingChecks--;
-  checkAllDone();
+  if (reachable) {
+    // EXPOSED: server has hotlink protection but file is reachable via proxy
+    badge.className     = 'badge b-exp';
+    badge.textContent   = 'EXPOSED';
+    card.dataset.status = 'exp';
+    card.classList.add('c-exposed');
+    overlay.innerHTML   =
+      '<span class="ico">⚠️</span>' +
+      '<a href="' + esc(url) + '" target="_blank" rel="noopener" onclick="event.stopPropagation()">Open direct URL</a>' +
+      (attach ? '<a href="' + esc(attach) + '" target="_blank" rel="noopener" onclick="event.stopPropagation()">View on site</a>' : '');
+    state.counts.exp++;
   } else {
-    badge.className='badge berr';
-    badge.textContent='BLOCKED';
-    si.innerHTML='<span class="ico">🔒</span>'+
-      '<a href="'+eh(imgUrl)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="font-size:11px;color:var(--acc);text-decoration:underline;margin:2px 0">Open direct URL</a>'+
-      (attachPage?'<a href="'+eh(attachPage)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="font-size:10px;color:var(--mut);text-decoration:underline">View on site</a>':'');
-    card.dataset.status='blocked';
-    if(activeFilter!=='all'&&activeFilter!=='blocked')card.style.display='none';
-    counts.blocked++;
-  pendingChecks--;
-  checkAllDone();
+    // BLOCKED: not reachable via proxy either
+    badge.className     = 'badge b-blk';
+    badge.textContent   = 'BLOCKED';
+    card.dataset.status = 'blk';
+    overlay.innerHTML   =
+      '<span class="ico">🔒</span>' +
+      '<a href="' + esc(url) + '" target="_blank" rel="noopener" onclick="event.stopPropagation()">Open direct URL</a>' +
+      (attach ? '<a href="' + esc(attach) + '" target="_blank" rel="noopener" onclick="event.stopPropagation()">View on site</a>' : '');
+    state.counts.blk++;
   }
-  updateStats();
+
+  if (state.filter !== 'all' && state.filter !== card.dataset.status) card.style.display = 'none';
+
+  state.images[url].status = card.dataset.status;
+  state.pending--;
+  updateCounts();
+  checkDone();
 }
 
-// === WP REST API MODE ===
-async function runWP(){
-  if(going)return;
-  var raw=document.getElementById('urlInput').value.trim();
-  if(!raw){st('Enter a URL first.');return;}
-  var base;try{base=new URL(raw).origin;}catch(e){st('Invalid URL.');return;}
-  going=true;
-  initUI();
-  st('Fetching WordPress media library...');
-  pr(10);
-
-  var page=1,total=0;
-  try{
-    while(true){
-      var apiUrl=base+'/wp-json/wp/v2/media?per_page=100&page='+page+'&media_type=image';
-      L('WP API page '+page);
-      var text=await fetchUrl(apiUrl);
-      var items;
-      try{items=JSON.parse(text);}catch(e){throw new Error('JSON parse failed: '+text.slice(0,100));}
-      if(!Array.isArray(items)||items.length===0){L('No more items on page '+page);break;}
-      L('Got '+items.length+' items','ok');
-      for(var i=0;i<items.length;i++){
-        var item=items[i];
-        var src=item.source_url||'';
-        var attachPage=item.link||'';
-        if(src)addImage(src,'WP Media Library','bwp',attachPage);
-      }
-      total+=items.length;
-      pr(Math.min(70,10+(page*15)));
-      page++;
-      if(items.length<100)break;
-      await new Promise(function(r){setTimeout(r,200);});
-    }
-    L('All media fetched. Browser now loading images and checking statuses...','ok');
-    st('Loading '+Object.keys(images).length+' images and checking statuses...');
-  }catch(e){
-    L('Error: '+e.message,'err');
-    st('Error: '+e.message);
-  }
-  updateStats();
-  document.getElementById('goBtn').disabled=false;
-  document.getElementById('wpBtn').disabled=false;
-  going=false;
+// ─── URL helpers ──────────────────────────────────────────────────────────────
+function absUrl(base, href) {
+  if (!href || /^(data:|blob:|javascript:)/.test(href)) return null;
+  try { return new URL(href, base).href; } catch(e) { return null; }
+}
+function sameHost(base, u) {
+  try { return new URL(u).hostname === new URL(base).hostname; } catch(e) { return false; }
+}
+function isImageUrl(u) {
+  return /\.(jpe?g|png|gif|webp|svg|ico|avif|bmp|tiff?)(\?|$)/i.test(u.split('#')[0]);
 }
 
-// === PAGE CRAWLER MODE ===
-function extractFromHtml(html,pageUrl){
-  var imgs=new Set(),links=new Set();
-  var doc;try{doc=new DOMParser().parseFromString(html,'text/html');}catch(e){return{imgs:[],links:[]};}
-  var bel=doc.querySelector('base[href]');
-  var base=bel?(abs(pageUrl,bel.getAttribute('href'))||pageUrl):pageUrl;
-  function addImg(h){if(!h)return;if(h.startsWith('data:'))return;var x=abs(base,h);if(!x||x.startsWith('data:')||x.includes('base64'))return;var fn=x.split('?')[0].split('/').pop().toLowerCase();if(fn.length<3)return;imgs.add(x);}
-  function addSS(v){if(!v)return;v.split(',').forEach(function(s){var p=s.trim().split(/\s+/)[0];if(p)addImg(p);});}
-  doc.querySelectorAll('img').forEach(function(el){['src','data-src','data-lazy-src','data-original','data-img','data-image','data-bg','data-lazy','data-delayed-src','data-echo'].forEach(function(a){addImg(el.getAttribute(a));});['srcset','data-srcset','data-lazy-srcset'].forEach(function(a){addSS(el.getAttribute(a));});});
-  doc.querySelectorAll('picture source').forEach(function(el){addSS(el.getAttribute('srcset'));addImg(el.getAttribute('src'));});
-  doc.querySelectorAll('[style]').forEach(function(el){var m,re=/url\(\s*['"]?([^'")\s]+)['"]?\s*\)/gi,s=el.getAttribute('style')||'';while((m=re.exec(s))!==null){if(isImage(m[1]))addImg(m[1]);}});
-  doc.querySelectorAll('style').forEach(function(el){var m,re=/url\(\s*['"]?([^'")\s]+)['"]?\s*\)/gi,css=el.textContent||'';while((m=re.exec(css))!==null){if(!m[1].startsWith('data:')&&isImage(m[1]))addImg(m[1]);}});
-  doc.querySelectorAll('meta[property="og:image"],meta[name="twitter:image"],meta[property="og:image:url"]').forEach(function(el){addImg(el.getAttribute('content'));});
-  doc.querySelectorAll('link[rel~="icon"][href],link[rel~="apple-touch-icon"][href]').forEach(function(el){addImg(el.getAttribute('href'));});
-  doc.querySelectorAll('[data-background],[data-bg-src],[data-background-image]').forEach(function(el){['data-background','data-bg-src','data-background-image'].forEach(function(a){var v=el.getAttribute(a);if(v&&!v.startsWith('{'))addImg(v);});});
-  doc.querySelectorAll('video[poster]').forEach(function(el){addImg(el.getAttribute('poster'));});
-  doc.querySelectorAll('a[href]').forEach(function(el){
-    var h=el.getAttribute('href');if(!h||/^(#|mailto:|tel:|javascript:|ftp:)/.test(h))return;
-    var x=abs(base,h);
-    if(x&&same(pageUrl,x)){var c=x.split('#')[0].replace(/\/$/,'');if(!/\.(jpe?g|png|gif|webp|svg|ico|js|css|woff|ttf|pdf|zip|mp4|mp3|docx?|xlsx?|pptx?|rar|gz|doc)(\?|$)/i.test(c)&&!/\/export-events\//i.test(c)&&!/[?&]key=/.test(c))links.add(c);}
+// ─── HTML extraction ──────────────────────────────────────────────────────────
+function extractFromHtml(html, pageUrl) {
+  var imgs  = {};
+  var links = {};
+  var doc;
+  try { doc = new DOMParser().parseFromString(html, 'text/html'); } catch(e) { return { imgs:[], links:[] }; }
+
+  var baseEl = doc.querySelector('base[href]');
+  var base   = baseEl ? (absUrl(pageUrl, baseEl.getAttribute('href')) || pageUrl) : pageUrl;
+
+  function addImg(h) {
+    if (!h || h.indexOf('data:') === 0) return;
+    var x = absUrl(base, h);
+    if (!x || x.indexOf('data:') === 0 || x.indexOf('base64') !== -1) return;
+    var fn = x.split('?')[0].split('/').pop();
+    if (fn.length < 3) return;
+    imgs[x] = true;
+  }
+  function addSrcset(v) {
+    if (!v) return;
+    v.split(',').forEach(function(s){ var p = s.trim().split(/\s+/)[0]; if (p) addImg(p); });
+  }
+
+  // img tags
+  doc.querySelectorAll('img').forEach(function(el){
+    ['src','data-src','data-lazy-src','data-original','data-img','data-image','data-bg','data-lazy','data-delayed-src','data-echo'].forEach(function(a){ addImg(el.getAttribute(a)); });
+    ['srcset','data-srcset','data-lazy-srcset'].forEach(function(a){ addSrcset(el.getAttribute(a)); });
   });
-  return{imgs:Array.from(imgs),links:Array.from(links)};
+  // picture source
+  doc.querySelectorAll('picture source').forEach(function(el){
+    addSrcset(el.getAttribute('srcset'));
+    addImg(el.getAttribute('src'));
+  });
+  // CSS background images (inline style)
+  doc.querySelectorAll('[style]').forEach(function(el){
+    var m, re = /url\(\s*['"]?([^'")\s]+)['"]?\s*\)/gi, s = el.getAttribute('style') || '';
+    while ((m = re.exec(s)) !== null) { if (isImageUrl(m[1])) addImg(m[1]); }
+  });
+  // <style> blocks
+  doc.querySelectorAll('style').forEach(function(el){
+    var m, re = /url\(\s*['"]?([^'")\s]+)['"]?\s*\)/gi, css = el.textContent || '';
+    while ((m = re.exec(css)) !== null) { if (!m[1].startsWith('data:') && isImageUrl(m[1])) addImg(m[1]); }
+  });
+  // meta OG images
+  doc.querySelectorAll('meta[property="og:image"],meta[name="twitter:image"],meta[property="og:image:url"]').forEach(function(el){ addImg(el.getAttribute('content')); });
+  // favicons
+  doc.querySelectorAll('link[rel~="icon"][href],link[rel~="apple-touch-icon"][href]').forEach(function(el){ addImg(el.getAttribute('href')); });
+  // video poster
+  doc.querySelectorAll('video[poster]').forEach(function(el){ addImg(el.getAttribute('poster')); });
+  // data-background
+  doc.querySelectorAll('[data-background],[data-bg-src],[data-background-image]').forEach(function(el){
+    ['data-background','data-bg-src','data-background-image'].forEach(function(a){ var v = el.getAttribute(a); if (v && v.charAt(0) !== '{') addImg(v); });
+  });
+
+  // Internal page links for crawling
+  doc.querySelectorAll('a[href]').forEach(function(el){
+    var h = el.getAttribute('href');
+    if (!h || /^(#|mailto:|tel:|javascript:|ftp:)/.test(h)) return;
+    var x = absUrl(base, h);
+    if (x && sameHost(pageUrl, x)) {
+      var c = x.split('#')[0].replace(/\/$/, '');
+      if (!/\.(jpe?g|png|gif|webp|svg|ico|js|css|woff|ttf|pdf|zip|mp4|mp3|docx?|xlsx?|pptx?|rar|gz)(\?|$)/i.test(c) &&
+          !/\/export-events\//i.test(c) &&
+          !/[?&]key=/i.test(c)) {
+        links[c] = true;
+      }
+    }
+  });
+
+  return { imgs: Object.keys(imgs), links: Object.keys(links) };
 }
 
-function processQueue(){
-  while(activeCount<concur&&queue.length>0&&pages+activeCount<maxPages){
-    var item=queue.shift();
-    if(visited[item.url])continue;
-    visited[item.url]=true;
-    activeCount++;
-    crawlPage(item);
+
+// ─── Page crawler ─────────────────────────────────────────────────────────────
+function startCrawl() {
+  if (state.going) return;
+  var raw = document.getElementById('urlInput').value.trim();
+  if (!raw) { setStatus('Enter a URL first.'); return; }
+  var startUrl;
+  try { startUrl = new URL(raw).href; } catch(e) { setStatus('Invalid URL.'); return; }
+
+  var doSub   = document.getElementById('doSub').checked;
+  var maxD    = parseInt(document.getElementById('maxD').value);
+  var maxP    = parseInt(document.getElementById('maxP').value);
+  var concur  = parseInt(document.getElementById('concur').value);
+
+  init();
+  setStatus('Starting crawl...');
+
+  var visited = {};
+  var queue   = [{ url: startUrl, depth: 0 }];
+  var active  = 0;
+
+  function next() {
+    // Feed up to `concur` parallel crawls
+    while (active < concur && queue.length > 0 && state.pages + active < maxP) {
+      var item = queue.shift();
+      if (visited[item.url]) { next(); return; }
+      visited[item.url] = true;
+      active++;
+      crawlOne(item);
+    }
+    // If nothing active and queue empty, crawl phase is done
+    if (active === 0) {
+      state.going = false;
+      setProgress(90);
+      setStatus('Crawl done. ' + state.pages + ' pages, ' + state.counts.all + ' images found. Checking accessibility...');
+      // checkDone will fire finish() once all pending image checks complete
+      checkDone();
+    }
   }
-  if(activeCount===0&&queue.length===0){
-    pr(100);updateStats();
-    st('Done. '+pages+' pages crawled, '+Object.keys(images).length+' images found.');
-    document.getElementById('goBtn').disabled=false;
-    document.getElementById('wpBtn').disabled=false;
-    going=false;
+
+  async function crawlOne(item) {
+    setStatus('Crawling ' + (state.pages + active) + '/' + maxP + ': ' + item.url);
+    setProgress(((state.pages + active) / maxP) * 80);
+    log('Crawling: ' + item.url);
+    try {
+      var html = await fetchContent(item.url);
+      state.pages++;
+      var r = extractFromHtml(html, item.url);
+      log('  ' + r.imgs.length + ' images, ' + r.links.length + ' links', 'lok');
+      r.imgs.forEach(function(u){ addImage(u, item.url, null); });
+      if (doSub && item.depth < maxD) {
+        r.links.forEach(function(lk){ if (!visited[lk]) queue.push({ url: lk, depth: item.depth + 1 }); });
+      }
+    } catch(e) {
+      state.fails++;
+      log('FAILED: ' + item.url + ' — ' + e.message, 'lerr');
+    }
+    active--;
+    next();
   }
+
+  next();
 }
 
-async function crawlPage(item){
-  L('Crawling: '+item.url);
-  st('Crawled '+pages+'/'+maxPages+' pages. Active: '+activeCount+', Queue: '+queue.length);
-  pr((pages/maxPages)*80);
-  try{
-    var html=await fetchUrl(item.url);
-    pages++;
-    var r=extractFromHtml(html,item.url);
-    L('  '+r.imgs.length+' images, '+r.links.length+' links','ok');
-    for(var i=0;i<r.imgs.length;i++){addImage(r.imgs[i],item.url,'bok',null);}
-    if(doSub&&item.d<maxD){for(var j=0;j<r.links.length;j++){var lk=r.links[j];if(!visited[lk]&&pages+activeCount+queue.length<maxPages*3)queue.push({url:lk,d:item.d+1});}}
-  }catch(e){fails++;L('FAILED: '+item.url+' => '+e.message,'err');}
-  activeCount--;
-  processQueue();
-}
+// ─── WP Media API ─────────────────────────────────────────────────────────────
+async function startWP() {
+  if (state.going) return;
+  var raw = document.getElementById('urlInput').value.trim();
+  if (!raw) { setStatus('Enter a URL first.'); return; }
+  var origin;
+  try { origin = new URL(raw).origin; } catch(e) { setStatus('Invalid URL.'); return; }
 
-function runCrawl(){
-  if(going)return;
-  var raw=document.getElementById('urlInput').value.trim();
-  if(!raw){st('Enter a URL first.');return;}
-  var start;try{start=new URL(raw).href;}catch(e){st('Invalid URL.');return;}
-  doSub=document.getElementById('doSub').checked;
-  maxD=parseInt(document.getElementById('maxD').value);
-  maxPages=parseInt(document.getElementById('maxP').value);
-  concur=parseInt(document.getElementById('concur').value);
-  going=true;
-  initUI();
-  queue.push({url:start,d:0});
-  processQueue();
-}
+  init();
+  setStatus('Fetching WordPress media library...');
+  setProgress(5);
 
-function runWP_btn(){runWP();}
+  var page = 1, total = 0;
+  try {
+    while (true) {
+      var apiUrl = origin + '/wp-json/wp/v2/media?per_page=100&page=' + page + '&media_type=image';
+      log('WP API page ' + page + ': ' + apiUrl);
+      var text = await fetchContent(apiUrl, 20000);
+      var items;
+      try { items = JSON.parse(text); } catch(e) { throw new Error('JSON parse failed: ' + text.slice(0,80)); }
+      if (!Array.isArray(items) || items.length === 0) { log('No more items on page ' + page); break; }
+      log('Got ' + items.length + ' items', 'lok');
+      items.forEach(function(item){
+        var src    = item.source_url || '';
+        var attach = item.link || '';
+        if (src) addImage(src, 'WP Media Library', attach);
+      });
+      total += items.length;
+      setProgress(Math.min(60, 5 + page * 10));
+      page++;
+      if (items.length < 100) break;
+      await new Promise(function(r){ setTimeout(r, 300); });
+    }
+    log('All ' + total + ' media items fetched. Now checking accessibility...', 'lok');
+    setStatus('Checking accessibility of ' + state.counts.all + ' images...');
+    setProgress(70);
+  } catch(e) {
+    log('WP API error: ' + e.message, 'lerr');
+    setStatus('Error: ' + e.message);
+  }
+
+  // Crawl phase complete — image checks run via browser img onload/onerror
+  state.going = false;
+  checkDone(); // will call finish() once all pending === 0
+}
 </script>
 </body>
 </html>
