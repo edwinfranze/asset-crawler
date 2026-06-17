@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Image Crawler v2.2</title>
+<title>Image Crawler v2.3</title>
 <style>
 :root {
   --bg: #0d1117; --sur: #161b22; --bdr: #30363d;
@@ -89,7 +89,7 @@ select { background: var(--sur); border: 1px solid var(--bdr); border-radius: 8p
 </head>
 <body>
 
-<h1>Image Crawler <span class="ver">v2.2</span></h1>
+<h1>Image Crawler <span class="ver">v2.3</span></h1>
 <p class="sub">Security audit tool — finds all images and tests if they are truly inaccessible.</p>
 
 <input type="url" id="urlInput" value="https://paulus.unicoz.nl/" placeholder="https://example.com"
@@ -386,7 +386,7 @@ function imgLoaded(img) {
   checkDone();
 }
 
-async function imgFailed(img) {
+function imgFailed(img) {
   img.style.display = 'none';
   var card    = img.closest('.card');
   var url     = card.dataset.url;
@@ -394,42 +394,20 @@ async function imgFailed(img) {
   var overlay = document.getElementById(card.dataset.ov);
   var attach  = state.images[url].attachPage;
 
-  // Show checking state
+  // Mark as BLOCKED immediately - no proxy probe (too slow, unreliable)
+  badge.className     = 'badge b-blk';
+  badge.textContent   = 'BLOCKED';
+  card.dataset.status = 'blk';
   overlay.style.display = 'flex';
-  overlay.innerHTML = '<span class="ico">🔍</span>';
-  badge.className   = 'badge b-chk';
-  badge.textContent = 'CHECKING';
+  overlay.innerHTML =
+    '<span class="ico">🔒</span>' +
+    '<a href="' + esc(url) + '" target="_blank" rel="noopener" onclick="event.stopPropagation()">Open direct URL</a>' +
+    (attach ? '<a href="' + esc(attach) + '" target="_blank" rel="noopener" onclick="event.stopPropagation()">View on site</a>' : '');
 
-  // Probe whether file is reachable via proxy
-  var reachable = await probeImage(url);
-  log((reachable ? 'EXPOSED' : 'Blocked') + ': ' + fileName(url), reachable ? 'lexp' : 'lwarn');
+  if (state.filter !== 'all' && state.filter !== 'blk') card.style.display = 'none';
 
-  if (reachable) {
-    // EXPOSED: server has hotlink protection but file is reachable via proxy
-    badge.className     = 'badge b-exp';
-    badge.textContent   = 'EXPOSED';
-    card.dataset.status = 'exp';
-    card.classList.add('c-exposed');
-    overlay.innerHTML   =
-      '<span class="ico">⚠️</span>' +
-      '<a href="' + esc(url) + '" target="_blank" rel="noopener" onclick="event.stopPropagation()">Open direct URL</a>' +
-      (attach ? '<a href="' + esc(attach) + '" target="_blank" rel="noopener" onclick="event.stopPropagation()">View on site</a>' : '');
-    state.counts.exp++;
-  } else {
-    // BLOCKED: not reachable via proxy either
-    badge.className     = 'badge b-blk';
-    badge.textContent   = 'BLOCKED';
-    card.dataset.status = 'blk';
-    overlay.innerHTML   =
-      '<span class="ico">🔒</span>' +
-      '<a href="' + esc(url) + '" target="_blank" rel="noopener" onclick="event.stopPropagation()">Open direct URL</a>' +
-      (attach ? '<a href="' + esc(attach) + '" target="_blank" rel="noopener" onclick="event.stopPropagation()">View on site</a>' : '');
-    state.counts.blk++;
-  }
-
-  if (state.filter !== 'all' && state.filter !== card.dataset.status) card.style.display = 'none';
-
-  state.images[url].status = card.dataset.status;
+  state.images[url].status = 'blk';
+  state.counts.blk++;
   state.pending--;
   updateCounts();
   checkDone();
