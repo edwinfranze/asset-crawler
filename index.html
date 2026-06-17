@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Image Crawler v2.1</title>
+<title>Image Crawler v2.2</title>
 <style>
 :root {
   --bg: #0d1117; --sur: #161b22; --bdr: #30363d;
@@ -89,7 +89,7 @@ select { background: var(--sur); border: 1px solid var(--bdr); border-radius: 8p
 </head>
 <body>
 
-<h1>Image Crawler <span class="ver">v2.1</span></h1>
+<h1>Image Crawler <span class="ver">v2.2</span></h1>
 <p class="sub">Security audit tool — finds all images and tests if they are truly inaccessible.</p>
 
 <input type="url" id="urlInput" value="https://paulus.unicoz.nl/" placeholder="https://example.com"
@@ -158,29 +158,34 @@ async function fetchContent(url, timeoutMs) {
   timeoutMs = timeoutMs || 15000;
   var lastErr = '';
   for (var i = 0; i < PROXIES.length; i++) {
-    var ctrl = new AbortController();
-    var tid  = setTimeout(function(){ ctrl.abort(); }, timeoutMs);
-    try {
-      var resp = await fetch(PROXIES[i](url), {
-        headers: { 'Accept': '*/*' },
-        signal: ctrl.signal
-      });
-      clearTimeout(tid);
-      if (!resp.ok) { lastErr = 'HTTP ' + resp.status; continue; }
-      var text = await resp.text();
-      // allorigins /get wraps in JSON
-      if (text.trim().charAt(0) === '{') {
-        try { var j = JSON.parse(text); if (j.contents) text = j.contents; } catch(e) {}
-      }
-      if (text.length < 50) { lastErr = 'Empty response'; continue; }
-      return text;
-    } catch(e) {
-      clearTimeout(tid);
-      lastErr = e.message;
-      log('Proxy ' + i + ' failed: ' + e.message, 'lwarn');
-    }
+    var result = await fetchWithProxy(PROXIES[i](url), timeoutMs);
+    if (result.ok) return result.text;
+    lastErr = result.err;
+    log('Proxy ' + i + ' failed: ' + result.err, 'lwarn');
   }
   throw new Error(lastErr || 'All proxies failed');
+}
+
+async function fetchWithProxy(proxyUrl, timeoutMs) {
+  var ctrl = new AbortController();
+  var tid = setTimeout(function(){ ctrl.abort(); }, timeoutMs);
+  try {
+    var resp = await fetch(proxyUrl, {
+      headers: { 'Accept': '*/*' },
+      signal: ctrl.signal
+    });
+    clearTimeout(tid);
+    if (!resp.ok) return { ok: false, err: 'HTTP ' + resp.status };
+    var text = await resp.text();
+    if (text.trim().charAt(0) === '{') {
+      try { var j = JSON.parse(text); if (j.contents) text = j.contents; } catch(e) {}
+    }
+    if (text.length < 50) return { ok: false, err: 'Empty response' };
+    return { ok: true, text: text };
+  } catch(e) {
+    clearTimeout(tid);
+    return { ok: false, err: e.message };
+  }
 }
 
 // Test if an image file is directly reachable via proxy — short timeout
