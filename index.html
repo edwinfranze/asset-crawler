@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Image Crawler v2.3</title>
+<title>Image Crawler v2.4</title>
 <style>
 :root {
   --bg: #0d1117; --sur: #161b22; --bdr: #30363d;
@@ -12,7 +12,7 @@
   --ok: #3fb950; --okbg: #1a3a2a;
   --err: #f85149; --errbg: #3a1a1a;
   --exp: #ff6b35; --expbg: #3a1a00;
-  --warn: #d29922;
+  --gone: #d29922; --gonebg: #2a2010;
   --r: 10px;
   --f: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
 }
@@ -29,7 +29,7 @@ input::placeholder { color: var(--mut); }
 .olbl input[type=checkbox] { accent-color: var(--acc); width: 16px; height: 16px; }
 select { background: var(--sur); border: 1px solid var(--bdr); border-radius: 8px; color: var(--txt); font-family: var(--f); font-size: 13px; padding: 6px 10px; outline: none; -webkit-appearance: none; cursor: pointer; }
 .btnrow { display: flex; gap: 10px; margin-bottom: 8px; }
-.btn { flex: 1; border: none; border-radius: var(--r); font-family: var(--f); font-size: 15px; font-weight: 700; padding: 14px; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: opacity .15s; }
+.btn { flex: 1; border: none; border-radius: var(--r); font-family: var(--f); font-size: 15px; font-weight: 700; padding: 14px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .btn:disabled { opacity: .4; cursor: not-allowed; }
 .btn-primary { background: var(--acc); color: #0d1117; }
 .btn-secondary { background: var(--sur); border: 1px solid var(--acc); color: var(--acc); }
@@ -37,59 +37,48 @@ select { background: var(--sur); border: 1px solid var(--bdr); border-radius: 8p
 #status { margin-top: 12px; font-size: 13px; color: var(--mut); min-height: 18px; word-break: break-all; }
 .pbw { background: var(--sur); border-radius: 4px; height: 4px; margin-top: 8px; overflow: hidden; display: none; }
 .pb { background: var(--acc); height: 100%; width: 0%; transition: width .3s; }
-
-/* Stats chips - clickable filters */
 .stats { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
-.chip { background: var(--sur); border: 1px solid var(--bdr); border-radius: 8px; padding: 8px 12px; font-size: 12px; color: var(--mut); display: flex; flex-direction: column; gap: 2px; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: border-color .15s, outline .15s; min-width: 60px; }
-.chip:active { opacity: .8; }
+.chip { background: var(--sur); border: 1px solid var(--bdr); border-radius: 8px; padding: 8px 12px; font-size: 12px; color: var(--mut); display: flex; flex-direction: column; gap: 2px; cursor: pointer; -webkit-tap-highlight-color: transparent; min-width: 60px; transition: outline .15s; }
 .chip.active { outline: 2px solid var(--acc); }
 .chip b { font-size: 17px; font-weight: 700; color: var(--txt); }
 .chip.c-vis b { color: var(--ok); }
 .chip.c-exp b { color: var(--exp); }
+.chip.c-gone b { color: var(--gone); }
 .chip.c-blk b { color: var(--err); }
-
-/* Log */
 .logrow { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
 .logbtn { font-size: 12px; color: var(--mut); background: none; border: none; cursor: pointer; text-decoration: underline; font-family: var(--f); display: none; }
 .copybtn { font-size: 11px; color: var(--acc); background: var(--adim); border: 1px solid var(--acc); border-radius: 6px; padding: 3px 10px; cursor: pointer; font-family: var(--f); display: none; }
 .logbox { background: var(--sur); border: 1px solid var(--bdr); border-radius: var(--r); font-size: 11px; color: var(--mut); padding: 10px 12px; margin-top: 6px; max-height: 200px; overflow-y: auto; font-family: monospace; line-height: 1.7; display: none; }
 .logbox.on { display: block; }
-.lerr { color: var(--err); } .lok { color: var(--ok); } .lwarn { color: var(--warn); } .lexp { color: var(--exp); }
-
-/* Results grid */
+.lerr { color: var(--err); } .lok { color: var(--ok); } .lwarn { color: var(--gone); } .lexp { color: var(--exp); }
 #results { margin-top: 16px; }
 .sech { font-size: 12px; font-weight: 600; color: var(--mut); letter-spacing: .5px; text-transform: uppercase; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid var(--bdr); }
 .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
 .card { background: var(--sur); border: 1px solid var(--bdr); border-radius: var(--r); overflow: hidden; position: relative; }
 .card.c-exposed { border-color: var(--exp); }
-
-/* Thumbnail */
+.card.c-gone-card { border-color: var(--gone); }
 .thumb { width: 100%; aspect-ratio: 16/10; overflow: hidden; background: #0d1117; display: flex; align-items: center; justify-content: center; }
 .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .thumb-overlay { display: none; flex-direction: column; align-items: center; justify-content: center; gap: 4px; width: 100%; height: 100%; padding: 8px; text-align: center; }
-.thumb-overlay .ico { font-size: 24px; }
-.thumb-overlay a { font-size: 10px; color: var(--acc); text-decoration: underline; display: block; margin-top: 2px; }
-
-/* Card meta */
+.thumb-overlay .ico { font-size: 22px; }
+.thumb-overlay a { font-size: 10px; color: var(--acc); text-decoration: underline; display: block; margin-top: 2px; line-height: 1.4; }
 .ameta { padding: 8px 10px 10px; }
 .afn { font-size: 11px; color: var(--txt); word-break: break-all; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .asrc { font-size: 10px; color: var(--mut); margin-top: 3px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .asrc a { color: var(--acc); text-decoration: none; }
-
-/* Badge */
 .badge { position: absolute; top: 6px; right: 6px; border-radius: 6px; font-size: 10px; font-weight: 700; padding: 2px 6px; text-transform: uppercase; }
-.b-vis { background: var(--okbg); color: var(--ok); }
-.b-exp { background: var(--expbg); color: var(--exp); }
-.b-blk { background: var(--errbg); color: var(--err); }
-.b-chk { background: var(--adim); color: var(--acc); }
-.b-wp  { background: #1a2a3a; color: var(--acc); }
-
+.b-vis  { background: var(--okbg);   color: var(--ok); }
+.b-exp  { background: var(--expbg);  color: var(--exp); }
+.b-gone { background: var(--gonebg); color: var(--gone); }
+.b-blk  { background: var(--errbg);  color: var(--err); }
+.b-chk  { background: var(--adim);   color: var(--acc); }
+.b-wp   { background: #1a2a3a;       color: var(--acc); }
 .empty { text-align: center; padding: 40px 20px; color: var(--mut); font-size: 14px; line-height: 1.7; }
 </style>
 </head>
 <body>
 
-<h1>Image Crawler <span class="ver">v2.3</span></h1>
+<h1>Image Crawler <span class="ver">v2.4</span></h1>
 <p class="sub">Security audit tool — finds all images and tests if they are truly inaccessible.</p>
 
 <input type="url" id="urlInput" value="https://paulus.unicoz.nl/" placeholder="https://example.com"
@@ -109,124 +98,126 @@ select { background: var(--sur); border: 1px solid var(--bdr); border-radius: 8p
 </div>
 
 <div class="btnrow">
-  <button id="btnCrawl" class="btn btn-primary" onclick="startCrawl()">Crawl pages</button>
+  <button id="btnCrawl" class="btn btn-primary"   onclick="startCrawl()">Crawl pages</button>
   <button id="btnWP"    class="btn btn-secondary" onclick="startWP()">WP Media API</button>
 </div>
-<p class="note">WP Media API finds ALL uploaded images including unused ones.</p>
+<p class="note">WP Media API tests original + all resize variants per image.</p>
 
 <div id="status"></div>
 <div class="pbw" id="pbw"><div class="pb" id="pb"></div></div>
 
 <div class="logrow">
-  <button class="logbtn" id="logbtn" onclick="toggleLog()">Show log</button>
+  <button class="logbtn"  id="logbtn"  onclick="toggleLog()">Show log</button>
   <button class="copybtn" id="copybtn" onclick="copyLog()">Copy log</button>
 </div>
 <div class="logbox" id="logbox"></div>
 
 <div class="stats" id="statsRow" style="display:none">
-  <div class="chip active" id="chip-all"  onclick="setFilter('all')">  <b id="cnt-all">0</b>All</div>
-  <div class="chip c-vis"  id="chip-vis"  onclick="setFilter('vis')">  <b id="cnt-vis">0</b>Visible</div>
-  <div class="chip c-exp"  id="chip-exp"  onclick="setFilter('exp')" style="display:none"><b id="cnt-exp">0</b>Exposed</div>
-  <div class="chip c-blk"  id="chip-blk"  onclick="setFilter('blk')" style="display:none"><b id="cnt-blk">0</b>Blocked</div>
-  <div class="chip"        id="chip-pages"><b id="cnt-pages">0</b>Pages</div>
+  <div class="chip active"  id="chip-all"  onclick="setFilter('all')"><b id="cnt-all">0</b>All</div>
+  <div class="chip c-vis"   id="chip-vis"  onclick="setFilter('vis')"><b id="cnt-vis">0</b>Visible</div>
+  <div class="chip c-exp"   id="chip-exp"  onclick="setFilter('exp')"  style="display:none"><b id="cnt-exp">0</b>Exposed</div>
+  <div class="chip c-gone"  id="chip-gone" onclick="setFilter('gone')" style="display:none"><b id="cnt-gone">0</b>Gone</div>
+  <div class="chip c-blk"   id="chip-blk"  onclick="setFilter('blk')"  style="display:none"><b id="cnt-blk">0</b>Blocked</div>
+  <div class="chip"         id="chip-pages"><b id="cnt-pages">0</b>Pages</div>
 </div>
 
 <div id="results"></div>
 
 <script>
-// ─── State ────────────────────────────────────────────────────────────────────
-var state = {
-  images: {},        // url -> {status, attachPage, sourcePage}
-  logs:   [],
-  going:  false,
-  filter: 'all',
-  counts: { all:0, vis:0, exp:0, blk:0 },
-  pending: 0,        // images still being checked
+// ── State ─────────────────────────────────────────────────────────────────────
+var S = {
+  images:  {},   // cleanUrl -> { status, attachPage, sourcePage, allUrls[] }
+  logs:    [],
+  going:   false,
+  filter:  'all',
+  counts:  { all:0, vis:0, exp:0, gone:0, blk:0 },
+  pending: 0,
   pages:   0,
   fails:   0
 };
 
-// ─── Proxies ──────────────────────────────────────────────────────────────────
+// ── Proxies ───────────────────────────────────────────────────────────────────
 var PROXIES = [
   function(u){ return 'https://api.allorigins.win/raw?url=' + encodeURIComponent(u); },
   function(u){ return 'https://api.allorigins.win/get?url='  + encodeURIComponent(u); },
   function(u){ return 'https://corsproxy.io/?url='           + encodeURIComponent(u); }
 ];
 
-// Fetch with timeout and proxy fallback — for HTML/JSON content
-async function fetchContent(url, timeoutMs) {
+// Fetch HTML/JSON content via proxy with fallback
+async function fetchWithProxy(url, timeoutMs) {
   timeoutMs = timeoutMs || 15000;
   var lastErr = '';
   for (var i = 0; i < PROXIES.length; i++) {
-    var result = await fetchWithProxy(PROXIES[i](url), timeoutMs);
-    if (result.ok) return result.text;
-    lastErr = result.err;
-    log('Proxy ' + i + ' failed: ' + result.err, 'lwarn');
+    var result = await fetchOnce(PROXIES[i](url), timeoutMs, '*/*');
+    if (result.ok) {
+      var text = result.text;
+      if (text.trim().charAt(0) === '{') {
+        try { var j = JSON.parse(text); if (j.contents) text = j.contents; } catch(e) {}
+      }
+      if (text.length >= 50) return text;
+      lastErr = 'Empty response';
+    } else {
+      lastErr = result.err;
+      log('Proxy ' + i + ' failed: ' + result.err, 'lwarn');
+    }
   }
   throw new Error(lastErr || 'All proxies failed');
 }
 
-async function fetchWithProxy(proxyUrl, timeoutMs) {
+// Check HTTP status of an image URL via proxy (HEAD-like, short timeout)
+async function checkStatus(url) {
+  var result = await fetchOnce(PROXIES[0](url), 5000, 'image/*,*/*');
+  if (!result.ok) return { status: 'err', code: result.err };
+  // Try to detect 410 vs 200 from content-type
+  var ct = result.contentType || '';
+  if (ct.indexOf('image') !== -1 || ct.indexOf('octet') !== -1) return { status: 'ok', code: 200 };
+  // Proxy returned non-image content - probably an error page
+  var snippet = result.text.slice(0, 200).toLowerCase();
+  if (snippet.indexOf('410') !== -1 || snippet.indexOf('gone') !== -1) return { status: 'gone', code: 410 };
+  if (snippet.indexOf('403') !== -1 || snippet.indexOf('forbidden') !== -1) return { status: 'blocked', code: 403 };
+  if (result.text.length > 100) return { status: 'ok', code: 200 }; // has content, assume ok
+  return { status: 'blocked', code: 0 };
+}
+
+// Single fetch with timeout - returns { ok, text, contentType, err }
+async function fetchOnce(proxyUrl, timeoutMs, accept) {
   var ctrl = new AbortController();
   var tid = setTimeout(function(){ ctrl.abort(); }, timeoutMs);
   try {
     var resp = await fetch(proxyUrl, {
-      headers: { 'Accept': '*/*' },
+      headers: { 'Accept': accept || '*/*' },
       signal: ctrl.signal
     });
     clearTimeout(tid);
-    if (!resp.ok) return { ok: false, err: 'HTTP ' + resp.status };
     var text = await resp.text();
-    if (text.trim().charAt(0) === '{') {
-      try { var j = JSON.parse(text); if (j.contents) text = j.contents; } catch(e) {}
-    }
-    if (text.length < 50) return { ok: false, err: 'Empty response' };
-    return { ok: true, text: text };
+    var ct = resp.headers.get('content-type') || '';
+    if (!resp.ok) return { ok: false, err: 'HTTP ' + resp.status };
+    return { ok: true, text: text, contentType: ct };
   } catch(e) {
     clearTimeout(tid);
     return { ok: false, err: e.message };
   }
 }
 
-// Test if an image file is directly reachable via proxy — short timeout
-async function probeImage(url) {
-  var ctrl = new AbortController();
-  var tid  = setTimeout(function(){ ctrl.abort(); }, 4000);
-  try {
-    var resp = await fetch(PROXIES[0](url), {
-      headers: { 'Accept': 'image/*,*/*' },
-      signal: ctrl.signal
-    });
-    clearTimeout(tid);
-    if (!resp.ok) return false;
-    var ct = resp.headers.get('content-type') || '';
-    return ct.indexOf('image') !== -1 || ct.indexOf('octet') !== -1;
-  } catch(e) {
-    clearTimeout(tid);
-    return false;
-  }
-}
-
-// ─── Logging ──────────────────────────────────────────────────────────────────
+// ── Logging ───────────────────────────────────────────────────────────────────
 function log(msg, cls) {
   cls = cls || '';
   var t = new Date().toLocaleTimeString('en', {hour12:false,hour:'2-digit',minute:'2-digit',second:'2-digit'});
-  state.logs.push({ t: t, msg: msg, cls: cls });
+  S.logs.push('[' + t + '] ' + msg);
   var box = document.getElementById('logbox');
-  var line = '<span class="' + cls + '">[' + t + '] ' + esc(msg) + '</span>';
-  box.innerHTML += line + '<br>';
+  box.innerHTML += '<span class="' + cls + '">[' + t + '] ' + esc(msg) + '</span><br>';
   box.scrollTop = box.scrollHeight;
 }
 function esc(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 function toggleLog() {
-  var box = document.getElementById('logbox');
-  box.classList.toggle('on');
-  document.getElementById('logbtn').textContent = box.classList.contains('on') ? 'Hide log' : 'Show log';
+  var b = document.getElementById('logbox');
+  b.classList.toggle('on');
+  document.getElementById('logbtn').textContent = b.classList.contains('on') ? 'Hide log' : 'Show log';
 }
 function copyLog() {
-  var text = state.logs.map(function(l){ return '[' + l.t + '] ' + l.msg; }).join('\n');
+  var text = S.logs.join('\n');
   var btn = document.getElementById('copybtn');
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(text).then(function(){
@@ -242,52 +233,49 @@ function copyLog() {
   }
 }
 
-// ─── UI helpers ───────────────────────────────────────────────────────────────
+// ── UI ────────────────────────────────────────────────────────────────────────
 function setStatus(msg) { document.getElementById('status').textContent = msg; }
 function setProgress(v) {
   document.getElementById('pbw').style.display = 'block';
   document.getElementById('pb').style.width = Math.min(100, v) + '%';
 }
 function updateCounts() {
-  document.getElementById('cnt-all').textContent   = state.counts.all;
-  document.getElementById('cnt-vis').textContent   = state.counts.vis;
-  document.getElementById('cnt-exp').textContent   = state.counts.exp;
-  document.getElementById('cnt-blk').textContent   = state.counts.blk;
-  document.getElementById('cnt-pages').textContent = state.pages;
-  if (state.counts.exp > 0) document.getElementById('chip-exp').style.display = '';
-  if (state.counts.blk > 0) document.getElementById('chip-blk').style.display = '';
+  document.getElementById('cnt-all').textContent   = S.counts.all;
+  document.getElementById('cnt-vis').textContent   = S.counts.vis;
+  document.getElementById('cnt-exp').textContent   = S.counts.exp;
+  document.getElementById('cnt-gone').textContent  = S.counts.gone;
+  document.getElementById('cnt-blk').textContent   = S.counts.blk;
+  document.getElementById('cnt-pages').textContent = S.pages;
+  if (S.counts.exp  > 0) document.getElementById('chip-exp').style.display  = '';
+  if (S.counts.gone > 0) document.getElementById('chip-gone').style.display = '';
+  if (S.counts.blk  > 0) document.getElementById('chip-blk').style.display  = '';
   document.getElementById('statsRow').style.display = 'flex';
 }
 function setFilter(f) {
-  state.filter = f;
-  ['all','vis','exp','blk'].forEach(function(k){
+  S.filter = f;
+  ['all','vis','exp','gone','blk'].forEach(function(k){
     var el = document.getElementById('chip-' + k);
     if (el) el.classList.toggle('active', k === f);
   });
-  document.querySelectorAll('.card').forEach(function(card){
-    card.style.display = (f === 'all' || card.dataset.status === f) ? '' : 'none';
+  document.querySelectorAll('.card').forEach(function(c){
+    c.style.display = (f === 'all' || c.dataset.status === f) ? '' : 'none';
   });
 }
 function setButtons(disabled) {
   document.getElementById('btnCrawl').disabled = disabled;
   document.getElementById('btnWP').disabled    = disabled;
 }
-
-// ─── Init / reset ─────────────────────────────────────────────────────────────
 function init() {
-  state.images  = {};
-  state.logs    = [];
-  state.going   = true;
-  state.filter  = 'all';
-  state.counts  = { all:0, vis:0, exp:0, blk:0 };
-  state.pending = 0;
-  state.pages   = 0;
-  state.fails   = 0;
-
+  S.images = {}; S.logs = []; S.going = true; S.filter = 'all';
+  S.counts = { all:0, vis:0, exp:0, gone:0, blk:0 };
+  S.pending = 0; S.pages = 0; S.fails = 0;
   setButtons(true);
-  document.getElementById('statsRow').style.display    = 'none';
-  document.getElementById('chip-exp').style.display    = 'none';
-  document.getElementById('chip-blk').style.display    = 'none';
+  ['exp','gone','blk'].forEach(function(k){ document.getElementById('chip-'+k).style.display='none'; });
+  ['all','vis','exp','gone','blk'].forEach(function(k){
+    var el = document.getElementById('chip-'+k);
+    if (el) el.classList.toggle('active', k==='all');
+  });
+  document.getElementById('statsRow').style.display   = 'none';
   document.getElementById('results').innerHTML         = '<div class="sech">IMAGES</div><div class="grid" id="grid"></div>';
   document.getElementById('pbw').style.display         = 'none';
   document.getElementById('pb').style.width            = '0%';
@@ -296,32 +284,24 @@ function init() {
   document.getElementById('logbtn').style.display      = 'inline';
   document.getElementById('copybtn').style.display     = 'inline';
   document.getElementById('logbtn').textContent        = 'Show log';
-
-  // Reset chip active state
-  ['all','vis','exp','blk'].forEach(function(k){
-    var el = document.getElementById('chip-' + k);
-    if (el) el.classList.toggle('active', k === 'all');
-  });
 }
-
 function finish() {
-  state.going = false;
+  S.going = false;
   setButtons(false);
   setProgress(100);
-  setStatus('Done. ' + state.counts.all + ' images — ' +
-    state.counts.vis + ' visible, ' +
-    state.counts.exp + ' exposed, ' +
-    state.counts.blk + ' blocked' +
-    (state.fails > 0 ? ', ' + state.fails + ' pages failed' : '') + '.');
-  log('Complete: ' + state.counts.vis + ' visible, ' + state.counts.exp + ' exposed, ' + state.counts.blk + ' blocked', 'lok');
+  setStatus('Done. ' + S.counts.all + ' images — ' +
+    S.counts.vis  + ' visible, ' +
+    S.counts.exp  + ' exposed, ' +
+    S.counts.gone + ' gone (410), ' +
+    S.counts.blk  + ' blocked' +
+    (S.fails > 0 ? ', ' + S.fails + ' pages failed' : '') + '.');
+  log('Complete: vis=' + S.counts.vis + ' exp=' + S.counts.exp + ' gone=' + S.counts.gone + ' blk=' + S.counts.blk, 'lok');
 }
-
-// ─── Pending tracker ──────────────────────────────────────────────────────────
 function checkDone() {
-  if (!state.going && state.pending === 0) finish();
+  if (!S.going && S.pending === 0) finish();
 }
 
-// ─── Add image card ───────────────────────────────────────────────────────────
+// ── URL helpers ───────────────────────────────────────────────────────────────
 function cleanUrl(u) {
   return u.split('?')[0].replace(/-\d+x\d+(\.(?:jpe?g|png|gif|webp|svg|avif))$/i, '$1');
 }
@@ -329,91 +309,6 @@ function fileName(u) {
   try { var p = new URL(u).pathname; return decodeURIComponent(p.split('/').pop() || p || u); }
   catch(e) { return u; }
 }
-
-function addImage(rawUrl, sourcePage, attachPage) {
-  var url = cleanUrl(rawUrl);
-  if (state.images[url]) return;
-  state.images[url] = { status: 'chk', sourcePage: sourcePage || '', attachPage: attachPage || '' };
-  state.pending++;
-  state.counts.all++;
-  updateCounts();
-
-  var fn  = esc(fileName(url));
-  var su  = url.replace(/"/g, '%22');
-  var src = attachPage
-    ? '<a href="' + esc(attachPage) + '" target="_blank" rel="noopener">' + esc((attachPage).replace(/https?:\/\//,'').slice(0,40)) + '</a>'
-    : esc((sourcePage||'').replace(/https?:\/\//,'').slice(0,40));
-
-  var card = document.createElement('div');
-  card.className    = 'card';
-  card.dataset.url  = url;
-  card.dataset.status = 'chk';
-
-  card.innerHTML =
-    '<a href="' + su + '" target="_blank" rel="noopener" style="display:block;text-decoration:none">' +
-      '<div class="thumb">' +
-        '<img src="' + su + '" loading="lazy" onload="imgLoaded(this)" onerror="imgFailed(this)">' +
-        '<div class="thumb-overlay" id="ov-' + state.counts.all + '"></div>' +
-      '</div>' +
-    '</a>' +
-    '<div class="ameta"><div class="afn">' + fn + '</div><div class="asrc">' + src + '</div></div>' +
-    '<span class="badge b-chk" id="bdg-' + state.counts.all + '">CHECKING</span>';
-
-  // Store overlay/badge IDs on card for fast lookup
-  card.dataset.ov  = 'ov-'  + state.counts.all;
-  card.dataset.bdg = 'bdg-' + state.counts.all;
-
-  document.getElementById('grid').appendChild(card);
-
-  // Apply current filter
-  if (state.filter !== 'all' && state.filter !== 'chk') card.style.display = 'none';
-}
-
-function imgLoaded(img) {
-  var card  = img.closest('.card');
-  var url   = card.dataset.url;
-  var badge = document.getElementById(card.dataset.bdg);
-
-  badge.className   = 'badge b-vis';
-  badge.textContent = 'VISIBLE';
-  card.dataset.status = 'vis';
-  if (state.filter !== 'all' && state.filter !== 'vis') card.style.display = 'none';
-
-  state.images[url].status = 'vis';
-  state.counts.vis++;
-  state.pending--;
-  updateCounts();
-  checkDone();
-}
-
-function imgFailed(img) {
-  img.style.display = 'none';
-  var card    = img.closest('.card');
-  var url     = card.dataset.url;
-  var badge   = document.getElementById(card.dataset.bdg);
-  var overlay = document.getElementById(card.dataset.ov);
-  var attach  = state.images[url].attachPage;
-
-  // Mark as BLOCKED immediately - no proxy probe (too slow, unreliable)
-  badge.className     = 'badge b-blk';
-  badge.textContent   = 'BLOCKED';
-  card.dataset.status = 'blk';
-  overlay.style.display = 'flex';
-  overlay.innerHTML =
-    '<span class="ico">🔒</span>' +
-    '<a href="' + esc(url) + '" target="_blank" rel="noopener" onclick="event.stopPropagation()">Open direct URL</a>' +
-    (attach ? '<a href="' + esc(attach) + '" target="_blank" rel="noopener" onclick="event.stopPropagation()">View on site</a>' : '');
-
-  if (state.filter !== 'all' && state.filter !== 'blk') card.style.display = 'none';
-
-  state.images[url].status = 'blk';
-  state.counts.blk++;
-  state.pending--;
-  updateCounts();
-  checkDone();
-}
-
-// ─── URL helpers ──────────────────────────────────────────────────────────────
 function absUrl(base, href) {
   if (!href || /^(data:|blob:|javascript:)/.test(href)) return null;
   try { return new URL(href, base).href; } catch(e) { return null; }
@@ -421,17 +316,140 @@ function absUrl(base, href) {
 function sameHost(base, u) {
   try { return new URL(u).hostname === new URL(base).hostname; } catch(e) { return false; }
 }
-function isImageUrl(u) {
+function isImageExt(u) {
   return /\.(jpe?g|png|gif|webp|svg|ico|avif|bmp|tiff?)(\?|$)/i.test(u.split('#')[0]);
 }
 
-// ─── HTML extraction ──────────────────────────────────────────────────────────
+// ── Add image card ─────────────────────────────────────────────────────────────
+function addImage(rawUrl, sourcePage, attachPage, extraUrls) {
+  var url = cleanUrl(rawUrl);
+  if (S.images[url]) return;
+  extraUrls = extraUrls || [];
+  S.images[url] = { status: 'chk', sourcePage: sourcePage||'', attachPage: attachPage||'', allUrls: [url].concat(extraUrls) };
+  S.pending++;
+  S.counts.all++;
+  updateCounts();
+
+  var fn  = esc(fileName(url));
+  var su  = url.replace(/"/g, '%22');
+  var src = attachPage
+    ? '<a href="'+esc(attachPage)+'" target="_blank" rel="noopener">'+esc(attachPage.replace(/https?:\/\//,'').slice(0,40))+'</a>'
+    : esc((sourcePage||'').replace(/https?:\/\//,'').slice(0,40));
+
+  var card = document.createElement('div');
+  card.className = 'card';
+  card.dataset.url    = url;
+  card.dataset.status = 'chk';
+  var cardId = 'c' + S.counts.all;
+  card.id = cardId;
+
+  card.innerHTML =
+    '<a href="'+su+'" target="_blank" rel="noopener" style="display:block;text-decoration:none">'+
+      '<div class="thumb">'+
+        '<img src="'+su+'" loading="lazy" onload="imgOk(\''+cardId+'\')" onerror="imgErr(\''+cardId+'\')">'+
+        '<div class="thumb-overlay" id="ov-'+cardId+'"></div>'+
+      '</div>'+
+    '</a>'+
+    '<div class="ameta"><div class="afn">'+fn+'</div><div class="asrc">'+src+'</div></div>'+
+    '<span class="badge b-chk" id="bdg-'+cardId+'">CHECKING</span>';
+
+  document.getElementById('grid').appendChild(card);
+  if (S.filter !== 'all') card.style.display = 'none';
+}
+
+function getCard(cardId) { return document.getElementById(cardId); }
+
+function imgOk(cardId) {
+  var card = getCard(cardId);
+  if (!card) return;
+  var url = card.dataset.url;
+  document.getElementById('bdg-'+cardId).className   = 'badge b-vis';
+  document.getElementById('bdg-'+cardId).textContent = 'VISIBLE';
+  document.getElementById('ov-'+cardId).style.display = 'none';
+  card.dataset.status = 'vis';
+  if (S.filter !== 'all' && S.filter !== 'vis') card.style.display = 'none';
+  S.images[url].status = 'vis';
+  S.counts.vis++;
+  S.pending--;
+  updateCounts();
+  checkDone();
+}
+
+async function imgErr(cardId) {
+  var card = getCard(cardId);
+  if (!card) return;
+  var url     = card.dataset.url;
+  var imgData = S.images[url];
+  var attach  = imgData.attachPage;
+  var allUrls = imgData.allUrls || [url];
+
+  // Hide broken img, show overlay
+  var imgEl = card.querySelector('img');
+  if (imgEl) imgEl.style.display = 'none';
+  var ov  = document.getElementById('ov-'+cardId);
+  var bdg = document.getElementById('bdg-'+cardId);
+  ov.style.display = 'flex';
+  ov.innerHTML = '<span class="ico">🔍</span>';
+  bdg.className   = 'badge b-chk';
+  bdg.textContent = 'CHECKING';
+
+  // Test all URLs (original + resize variants) via proxy
+  var bestStatus = 'blk';
+  var bestUrl    = url;
+
+  for (var i = 0; i < allUrls.length; i++) {
+    var testUrl = allUrls[i];
+    var result  = await checkStatus(testUrl);
+    log(result.status.toUpperCase() + ' (' + result.code + '): ' + fileName(testUrl),
+        result.status === 'ok' ? 'lexp' : result.status === 'gone' ? 'lwarn' : '');
+
+    if (result.status === 'ok') {
+      bestStatus = 'exp';
+      bestUrl    = testUrl;
+      break; // found accessible URL, no need to check more
+    }
+    if (result.status === 'gone' && bestStatus === 'blk') {
+      bestStatus = 'gone';
+      bestUrl    = testUrl;
+    }
+  }
+
+  // Apply final status
+  var su = bestUrl.replace(/"/g, '%22');
+  var viewLinks =
+    '<a href="'+esc(bestUrl)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()">Open direct URL</a>' +
+    (attach ? '<a href="'+esc(attach)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()">View on site</a>' : '');
+
+  if (bestStatus === 'exp') {
+    bdg.className = 'badge b-exp'; bdg.textContent = 'EXPOSED';
+    card.dataset.status = 'exp'; card.classList.add('c-exposed');
+    ov.innerHTML = '<span class="ico">⚠️</span>' + viewLinks;
+    S.counts.exp++;
+    log('EXPOSED: ' + fileName(bestUrl), 'lexp');
+  } else if (bestStatus === 'gone') {
+    bdg.className = 'badge b-gone'; bdg.textContent = 'GONE';
+    card.dataset.status = 'gone'; card.classList.add('c-gone-card');
+    ov.innerHTML = '<span class="ico">🗑️</span>' + viewLinks;
+    S.counts.gone++;
+  } else {
+    bdg.className = 'badge b-blk'; bdg.textContent = 'BLOCKED';
+    card.dataset.status = 'blk';
+    ov.innerHTML = '<span class="ico">🔒</span>' + viewLinks;
+    S.counts.blk++;
+  }
+
+  if (S.filter !== 'all' && S.filter !== card.dataset.status) card.style.display = 'none';
+  S.images[url].status = card.dataset.status;
+  S.pending--;
+  updateCounts();
+  checkDone();
+}
+
+// ── HTML extraction ───────────────────────────────────────────────────────────
 function extractFromHtml(html, pageUrl) {
-  var imgs  = {};
-  var links = {};
+  var imgs = {}, links = {};
   var doc;
   try { doc = new DOMParser().parseFromString(html, 'text/html'); } catch(e) { return { imgs:[], links:[] }; }
-
   var baseEl = doc.querySelector('base[href]');
   var base   = baseEl ? (absUrl(pageUrl, baseEl.getAttribute('href')) || pageUrl) : pageUrl;
 
@@ -439,8 +457,7 @@ function extractFromHtml(html, pageUrl) {
     if (!h || h.indexOf('data:') === 0) return;
     var x = absUrl(base, h);
     if (!x || x.indexOf('data:') === 0 || x.indexOf('base64') !== -1) return;
-    var fn = x.split('?')[0].split('/').pop();
-    if (fn.length < 3) return;
+    if (x.split('/').pop().length < 3) return;
     imgs[x] = true;
   }
   function addSrcset(v) {
@@ -448,38 +465,27 @@ function extractFromHtml(html, pageUrl) {
     v.split(',').forEach(function(s){ var p = s.trim().split(/\s+/)[0]; if (p) addImg(p); });
   }
 
-  // img tags
   doc.querySelectorAll('img').forEach(function(el){
-    ['src','data-src','data-lazy-src','data-original','data-img','data-image','data-bg','data-lazy','data-delayed-src','data-echo'].forEach(function(a){ addImg(el.getAttribute(a)); });
+    ['src','data-src','data-lazy-src','data-original','data-img','data-image','data-bg','data-lazy'].forEach(function(a){ addImg(el.getAttribute(a)); });
     ['srcset','data-srcset','data-lazy-srcset'].forEach(function(a){ addSrcset(el.getAttribute(a)); });
   });
-  // picture source
   doc.querySelectorAll('picture source').forEach(function(el){
-    addSrcset(el.getAttribute('srcset'));
-    addImg(el.getAttribute('src'));
+    addSrcset(el.getAttribute('srcset')); addImg(el.getAttribute('src'));
   });
-  // CSS background images (inline style)
   doc.querySelectorAll('[style]').forEach(function(el){
     var m, re = /url\(\s*['"]?([^'")\s]+)['"]?\s*\)/gi, s = el.getAttribute('style') || '';
-    while ((m = re.exec(s)) !== null) { if (isImageUrl(m[1])) addImg(m[1]); }
+    while ((m = re.exec(s)) !== null) { if (isImageExt(m[1])) addImg(m[1]); }
   });
-  // <style> blocks
   doc.querySelectorAll('style').forEach(function(el){
     var m, re = /url\(\s*['"]?([^'")\s]+)['"]?\s*\)/gi, css = el.textContent || '';
-    while ((m = re.exec(css)) !== null) { if (!m[1].startsWith('data:') && isImageUrl(m[1])) addImg(m[1]); }
+    while ((m = re.exec(css)) !== null) { if (!m[1].startsWith('data:') && isImageExt(m[1])) addImg(m[1]); }
   });
-  // meta OG images
   doc.querySelectorAll('meta[property="og:image"],meta[name="twitter:image"],meta[property="og:image:url"]').forEach(function(el){ addImg(el.getAttribute('content')); });
-  // favicons
   doc.querySelectorAll('link[rel~="icon"][href],link[rel~="apple-touch-icon"][href]').forEach(function(el){ addImg(el.getAttribute('href')); });
-  // video poster
   doc.querySelectorAll('video[poster]').forEach(function(el){ addImg(el.getAttribute('poster')); });
-  // data-background
   doc.querySelectorAll('[data-background],[data-bg-src],[data-background-image]').forEach(function(el){
     ['data-background','data-bg-src','data-background-image'].forEach(function(a){ var v = el.getAttribute(a); if (v && v.charAt(0) !== '{') addImg(v); });
   });
-
-  // Internal page links for crawling
   doc.querySelectorAll('a[href]').forEach(function(el){
     var h = el.getAttribute('href');
     if (!h || /^(#|mailto:|tel:|javascript:|ftp:)/.test(h)) return;
@@ -487,88 +493,75 @@ function extractFromHtml(html, pageUrl) {
     if (x && sameHost(pageUrl, x)) {
       var c = x.split('#')[0].replace(/\/$/, '');
       if (!/\.(jpe?g|png|gif|webp|svg|ico|js|css|woff|ttf|pdf|zip|mp4|mp3|docx?|xlsx?|pptx?|rar|gz)(\?|$)/i.test(c) &&
-          !/\/export-events\//i.test(c) &&
-          !/[?&]key=/i.test(c)) {
+          !/\/export-events\//i.test(c) && !/[?&]key=/i.test(c)) {
         links[c] = true;
       }
     }
   });
-
   return { imgs: Object.keys(imgs), links: Object.keys(links) };
 }
 
-
-// ─── Page crawler ─────────────────────────────────────────────────────────────
+// ── Page crawler ───────────────────────────────────────────────────────────────
 function startCrawl() {
-  if (state.going) return;
+  if (S.going) return;
   var raw = document.getElementById('urlInput').value.trim();
   if (!raw) { setStatus('Enter a URL first.'); return; }
   var startUrl;
   try { startUrl = new URL(raw).href; } catch(e) { setStatus('Invalid URL.'); return; }
-
-  var doSub   = document.getElementById('doSub').checked;
-  var maxD    = parseInt(document.getElementById('maxD').value);
-  var maxP    = parseInt(document.getElementById('maxP').value);
-  var concur  = parseInt(document.getElementById('concur').value);
-
+  var doSub  = document.getElementById('doSub').checked;
+  var maxD   = parseInt(document.getElementById('maxD').value);
+  var maxP   = parseInt(document.getElementById('maxP').value);
+  var concur = parseInt(document.getElementById('concur').value);
   init();
   setStatus('Starting crawl...');
-
-  var visited = {};
-  var queue   = [{ url: startUrl, depth: 0 }];
-  var active  = 0;
+  var visited = {}, queue = [{ url: startUrl, depth: 0 }], active = 0;
 
   function next() {
-    // Feed up to `concur` parallel crawls
-    while (active < concur && queue.length > 0 && state.pages + active < maxP) {
+    while (active < concur && queue.length > 0 && S.pages + active < maxP) {
       var item = queue.shift();
-      if (visited[item.url]) { next(); return; }
+      if (visited[item.url]) continue;
       visited[item.url] = true;
       active++;
       crawlOne(item);
     }
-    // If nothing active and queue empty, crawl phase is done
     if (active === 0) {
-      state.going = false;
+      S.going = false;
       setProgress(90);
-      setStatus('Crawl done. ' + state.pages + ' pages, ' + state.counts.all + ' images found. Checking accessibility...');
-      // checkDone will fire finish() once all pending image checks complete
+      setStatus('Crawl done. ' + S.pages + ' pages, ' + S.counts.all + ' images. Checking access...');
       checkDone();
     }
   }
 
   async function crawlOne(item) {
-    setStatus('Crawling ' + (state.pages + active) + '/' + maxP + ': ' + item.url);
-    setProgress(((state.pages + active) / maxP) * 80);
+    setStatus('Crawling ' + (S.pages + active) + '/' + maxP + ': ' + item.url);
+    setProgress(((S.pages + active) / maxP) * 80);
     log('Crawling: ' + item.url);
     try {
-      var html = await fetchContent(item.url);
-      state.pages++;
+      var html = await fetchWithProxy(item.url);
+      S.pages++;
       var r = extractFromHtml(html, item.url);
       log('  ' + r.imgs.length + ' images, ' + r.links.length + ' links', 'lok');
-      r.imgs.forEach(function(u){ addImage(u, item.url, null); });
+      r.imgs.forEach(function(u){ addImage(u, item.url, null, []); });
       if (doSub && item.depth < maxD) {
         r.links.forEach(function(lk){ if (!visited[lk]) queue.push({ url: lk, depth: item.depth + 1 }); });
       }
     } catch(e) {
-      state.fails++;
+      S.fails++;
       log('FAILED: ' + item.url + ' — ' + e.message, 'lerr');
     }
     active--;
     next();
   }
-
   next();
 }
 
-// ─── WP Media API ─────────────────────────────────────────────────────────────
+// ── WP Media API ──────────────────────────────────────────────────────────────
 async function startWP() {
-  if (state.going) return;
+  if (S.going) return;
   var raw = document.getElementById('urlInput').value.trim();
   if (!raw) { setStatus('Enter a URL first.'); return; }
   var origin;
   try { origin = new URL(raw).origin; } catch(e) { setStatus('Invalid URL.'); return; }
-
   init();
   setStatus('Fetching WordPress media library...');
   setProgress(5);
@@ -576,35 +569,45 @@ async function startWP() {
   var page = 1, total = 0;
   try {
     while (true) {
-      var apiUrl = origin + '/wp-json/wp/v2/media?per_page=100&page=' + page + '&media_type=image';
-      log('WP API page ' + page + ': ' + apiUrl);
-      var text = await fetchContent(apiUrl, 20000);
+      var apiUrl = origin + '/wp-json/wp/v2/media?per_page=100&page=' + page + '&media_type=image&_fields=id,source_url,link,media_details';
+      log('WP API page ' + page);
+      var text = await fetchWithProxy(apiUrl, 20000);
       var items;
-      try { items = JSON.parse(text); } catch(e) { throw new Error('JSON parse failed: ' + text.slice(0,80)); }
-      if (!Array.isArray(items) || items.length === 0) { log('No more items on page ' + page); break; }
+      try { items = JSON.parse(text); } catch(e) { throw new Error('JSON parse failed'); }
+      if (!Array.isArray(items) || items.length === 0) { log('No more items'); break; }
       log('Got ' + items.length + ' items', 'lok');
-      items.forEach(function(item){
+
+      items.forEach(function(item) {
         var src    = item.source_url || '';
-        var attach = item.link || '';
-        if (src) addImage(src, 'WP Media Library', attach);
+        var attach = item.link       || '';
+        if (!src) return;
+
+        // Collect all size variants for this image
+        var extraUrls = [];
+        var sizes = item.media_details && item.media_details.sizes ? item.media_details.sizes : {};
+        Object.keys(sizes).forEach(function(sz) {
+          var sizeUrl = sizes[sz] && sizes[sz].source_url;
+          if (sizeUrl && sizeUrl !== src) extraUrls.push(sizeUrl);
+        });
+
+        addImage(src, 'WP Media Library', attach, extraUrls);
       });
+
       total += items.length;
       setProgress(Math.min(60, 5 + page * 10));
       page++;
       if (items.length < 100) break;
       await new Promise(function(r){ setTimeout(r, 300); });
     }
-    log('All ' + total + ' media items fetched. Now checking accessibility...', 'lok');
-    setStatus('Checking accessibility of ' + state.counts.all + ' images...');
+    log('All ' + total + ' items fetched. Checking access for ' + S.counts.all + ' images...', 'lok');
+    setStatus('Checking access for ' + S.counts.all + ' images...');
     setProgress(70);
   } catch(e) {
     log('WP API error: ' + e.message, 'lerr');
     setStatus('Error: ' + e.message);
   }
-
-  // Crawl phase complete — image checks run via browser img onload/onerror
-  state.going = false;
-  checkDone(); // will call finish() once all pending === 0
+  S.going = false;
+  checkDone();
 }
 </script>
 </body>
